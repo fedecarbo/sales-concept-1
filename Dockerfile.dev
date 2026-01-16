@@ -1,0 +1,17 @@
+FROM node:24-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Install dependencies first (better caching)
+COPY package*.json ./
+RUN npm install
+
+# Copy source code
+COPY . .
+
+# Expose Next.js dev server port
+EXPOSE 3000
+
+# Start development server
+CMD ["npm", "run", "dev"]
