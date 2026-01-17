@@ -14,19 +14,37 @@ import {
 
 interface WidgetGridProps {
   className?: string;
+  layout?: Layout[];
+  pageId?: string;
 }
 
-const initialLayout: Layout[] = [
+const defaultLayout: Layout[] = [
   { i: "dashboard", x: 0, y: 0, w: 6, h: 5, minW: 2, minH: 2 },
   { i: "analytics", x: 6, y: 0, w: 6, h: 2, minW: 2, minH: 2 },
   { i: "stats", x: 6, y: 2, w: 3, h: 3, minW: 2, minH: 2 },
   { i: "activity", x: 9, y: 2, w: 3, h: 3, minW: 2, minH: 2 },
 ];
 
-export function WidgetGrid({ className = "" }: WidgetGridProps) {
+// Widget titles for each type
+const widgetTitles: Record<string, string> = {
+  dashboard: "Dashboard",
+  analytics: "Analytics",
+  stats: "Stats",
+  activity: "Activity",
+  reports: "Reports",
+  trends: "Trends",
+  forecast: "Forecast",
+  pipeline: "Pipeline",
+  leaderboard: "Leaderboard",
+  targets: "Targets",
+  meetings: "Meetings",
+  tasks: "Tasks",
+};
+
+export function WidgetGrid({ className = "", layout: propLayout, pageId }: WidgetGridProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(1200);
-  const [layout, setLayout] = useState<Layout[]>(initialLayout);
+  const [layout, setLayout] = useState<Layout[]>(propLayout || defaultLayout);
 
   const cols = 12;
   const margin: [number, number] = [0, 0];
@@ -73,114 +91,34 @@ export function WidgetGrid({ className = "" }: WidgetGridProps) {
       />
     );
 
-    switch (id) {
-      case "dashboard":
-        return (
-          <>
-            <WidgetHeader
-              title="Dashboard"
-              action={
-                <CircleButton
-                  variant="ghost"
-                  icon={EllipsisHorizontalIcon}
-                  label="Options"
-                  size="sm"
-                />
-              }
+    // Get title from map or capitalize the id
+    const title = widgetTitles[id] || id.charAt(0).toUpperCase() + id.slice(1);
+
+    return (
+      <>
+        <WidgetHeader
+          title={title}
+          action={
+            <CircleButton
+              variant="ghost"
+              icon={EllipsisHorizontalIcon}
+              label="Options"
+              size="sm"
             />
-            <div className="flex-1 overflow-hidden p-4">{placeholderContent}</div>
-            <WidgetFooter>
-              <CircleButton variant="soft" icon={PlusIcon} label="Add" />
-              <CircleButton variant="soft-gray" icon={StarIcon} label="Favorite" />
-              <CircleButton
-                variant="soft-gray"
-                icon={EllipsisHorizontalIcon}
-                label="More"
-              />
-            </WidgetFooter>
-          </>
-        );
-      case "analytics":
-        return (
-          <>
-            <WidgetHeader
-              title="Analytics"
-              action={
-                <CircleButton
-                  variant="ghost"
-                  icon={EllipsisHorizontalIcon}
-                  label="Options"
-                  size="sm"
-                />
-              }
-            />
-            <div className="flex-1 overflow-hidden p-4">{placeholderContent}</div>
-            <WidgetFooter>
-              <CircleButton variant="soft" icon={PlusIcon} label="Add" />
-              <CircleButton variant="soft-gray" icon={StarIcon} label="Favorite" />
-              <CircleButton
-                variant="soft-gray"
-                icon={EllipsisHorizontalIcon}
-                label="More"
-              />
-            </WidgetFooter>
-          </>
-        );
-      case "stats":
-        return (
-          <>
-            <WidgetHeader
-              title="Stats"
-              action={
-                <CircleButton
-                  variant="ghost"
-                  icon={EllipsisHorizontalIcon}
-                  label="Options"
-                  size="sm"
-                />
-              }
-            />
-            <div className="flex-1 overflow-hidden p-4">{placeholderContent}</div>
-            <WidgetFooter>
-              <CircleButton variant="soft" icon={PlusIcon} label="Add" />
-              <CircleButton variant="soft-gray" icon={StarIcon} label="Favorite" />
-              <CircleButton
-                variant="soft-gray"
-                icon={EllipsisHorizontalIcon}
-                label="More"
-              />
-            </WidgetFooter>
-          </>
-        );
-      case "activity":
-        return (
-          <>
-            <WidgetHeader
-              title="Activity"
-              action={
-                <CircleButton
-                  variant="ghost"
-                  icon={EllipsisHorizontalIcon}
-                  label="Options"
-                  size="sm"
-                />
-              }
-            />
-            <div className="flex-1 overflow-hidden p-4">{placeholderContent}</div>
-            <WidgetFooter>
-              <CircleButton variant="soft" icon={PlusIcon} label="Add" />
-              <CircleButton variant="soft-gray" icon={StarIcon} label="Favorite" />
-              <CircleButton
-                variant="soft-gray"
-                icon={EllipsisHorizontalIcon}
-                label="More"
-              />
-            </WidgetFooter>
-          </>
-        );
-      default:
-        return null;
-    }
+          }
+        />
+        <div className="flex-1 overflow-hidden p-4">{placeholderContent}</div>
+        <WidgetFooter>
+          <CircleButton variant="soft" icon={PlusIcon} label="Add" />
+          <CircleButton variant="soft-gray" icon={StarIcon} label="Favorite" />
+          <CircleButton
+            variant="soft-gray"
+            icon={EllipsisHorizontalIcon}
+            label="More"
+          />
+        </WidgetFooter>
+      </>
+    );
   };
 
   // Generate grid cell layout for background (memoized)
