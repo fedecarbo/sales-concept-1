@@ -17,16 +17,15 @@ interface WidgetGridProps {
 }
 
 const initialLayout: Layout[] = [
-  { i: "dashboard", x: 0, y: 0, w: 6, h: 6, minW: 2, minH: 2 },
-  { i: "analytics", x: 6, y: 0, w: 6, h: 3, minW: 2, minH: 2 },
-  { i: "stats", x: 6, y: 3, w: 3, h: 3, minW: 2, minH: 2 },
-  { i: "activity", x: 9, y: 3, w: 3, h: 3, minW: 2, minH: 2 },
+  { i: "dashboard", x: 0, y: 0, w: 6, h: 5, minW: 2, minH: 2 },
+  { i: "analytics", x: 6, y: 0, w: 6, h: 2, minW: 2, minH: 2 },
+  { i: "stats", x: 6, y: 2, w: 3, h: 3, minW: 2, minH: 2 },
+  { i: "activity", x: 9, y: 2, w: 3, h: 3, minW: 2, minH: 2 },
 ];
 
 export function WidgetGrid({ className = "" }: WidgetGridProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(1200);
-  const [containerHeight, setContainerHeight] = useState(600);
   const [layout, setLayout] = useState<Layout[]>(initialLayout);
 
   const cols = 12;
@@ -38,7 +37,6 @@ export function WidgetGrid({ className = "" }: WidgetGridProps) {
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         setContainerWidth(entry.contentRect.width);
-        setContainerHeight(entry.contentRect.height);
       }
     });
 
@@ -46,16 +44,19 @@ export function WidgetGrid({ className = "" }: WidgetGridProps) {
     return () => resizeObserver.disconnect();
   }, []);
 
-  // Calculate column width based on container width
+  // Fixed number of rows that should fit the screen initially
+  const minRows = 5;
+
+  // Calculate column width for reference
   const colWidth = (containerWidth - margin[0] * (cols - 1)) / cols;
 
-  // Use square cells: row height equals column width
-  const rowHeight = colWidth;
+  // Row height is shorter than column width to create rectangular cells
+  // This ensures 6 rows fit comfortably in the screen height
+  const rowHeight = colWidth * 0.6;
 
-  // Calculate rows based on widget layout (max y + h) or minimum container fit
+  // Actual rows needed for the background grid (can exceed minRows when widgets grow)
   const layoutMaxRow = layout.reduce((max, item) => Math.max(max, item.y + item.h), 0);
-  const containerRows = Math.max(1, Math.floor((containerHeight + margin[1]) / (rowHeight + margin[1])));
-  const rows = Math.max(layoutMaxRow, containerRows);
+  const rows = Math.max(layoutMaxRow, minRows);
 
   const onLayoutChange = useCallback((newLayout: Layout[]) => {
     setLayout(newLayout);
@@ -104,7 +105,6 @@ export function WidgetGrid({ className = "" }: WidgetGridProps) {
           <>
             <WidgetHeader
               title="Analytics"
-              subtitle="Real-time data"
               action={
                 <CircleButton
                   variant="ghost"
@@ -223,7 +223,7 @@ export function WidgetGrid({ className = "" }: WidgetGridProps) {
           {gridCellLayout.map((cell) => (
             <div
               key={cell.i}
-              className="border border-zinc-200/50 dark:border-zinc-700/50"
+              className="rounded-2xl border border-zinc-200/50 dark:border-zinc-700/50"
             />
           ))}
         </GridLayout>

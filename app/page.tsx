@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
 import { WidgetGrid } from "./components/widgets";
 
 export default function Home() {
@@ -51,9 +52,38 @@ export default function Home() {
           </div>
         </div>
       ) : (
-        // Widget view - grid of widgets with page padding
-        <div className="min-h-0 flex-1 p-6">
-          <WidgetGrid />
+        // Widget view - header + command input + grid
+        <div className="flex min-h-0 flex-1 flex-col px-6">
+          {/* Header - floating pill container */}
+          <div className="mx-2.5 mt-4 flex items-center gap-4 rounded-full bg-white px-4 py-2 shadow-sm ring-1 ring-black/5 dark:bg-zinc-900 dark:ring-white/10">
+              {/* Dashboard label on the left */}
+              <p className="text-lg font-bold text-zinc-900 dark:text-white">
+                Sales prototype
+              </p>
+              {/* Command palette input - centered */}
+              <div className="flex flex-1 justify-center">
+              <div className="w-full max-w-xl">
+                <div className="relative rounded-full bg-zinc-100/80 ring-1 ring-black/5 dark:bg-zinc-800/80 dark:ring-white/10">
+                  <div className="grid grid-cols-1">
+                    <input
+                      type="text"
+                      className="col-start-1 row-start-1 h-9 w-full bg-transparent pr-4 pl-9 text-sm text-zinc-900 outline-none placeholder:text-zinc-500 dark:text-white dark:placeholder:text-zinc-400"
+                      placeholder="Ask anything..."
+                    />
+                    <MagnifyingGlassIcon
+                      className="pointer-events-none col-start-1 row-start-1 ml-3 size-4 self-center text-zinc-900/40 dark:text-zinc-500"
+                      aria-hidden="true"
+                    />
+                  </div>
+                </div>
+              </div>
+              </div>
+            </div>
+
+          {/* Grid */}
+          <div className="mt-2 min-h-0 flex-1 overflow-auto pb-6">
+            <WidgetGrid />
+          </div>
         </div>
       )}
     </div>
