@@ -2,53 +2,47 @@
 
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import GridLayout, { Layout } from "react-grid-layout";
-import { WidgetCard } from "./WidgetCard";
-import { WidgetHeader } from "./WidgetHeader";
-import { WidgetFooter } from "./WidgetFooter";
-import { CircleButton } from "../ui";
-import {
-  PlusIcon,
-  StarIcon,
-  EllipsisHorizontalIcon,
-} from "@heroicons/react/20/solid";
+import { SparklesIcon } from "@heroicons/react/20/solid";
+import { WidgetInstance, WidgetConnection } from "@/app/types";
+import { WidgetRenderer } from "./WidgetRenderer";
+import { pageTemplates } from "@/app/lib/aiTemplates";
+import { calculateWorkflowSteps } from "@/app/lib/workflowUtils";
 
 interface WidgetGridProps {
   className?: string;
   layout?: Layout[];
+  widgets?: WidgetInstance[];
+  connections?: WidgetConnection[];
   pageId?: string;
+  onApplyTemplate?: (
+    widgets: WidgetInstance[],
+    layout: Layout[],
+    connections: WidgetConnection[]
+  ) => void;
 }
 
-const defaultLayout: Layout[] = [
-  { i: "dashboard", x: 0, y: 0, w: 6, h: 5, minW: 2, minH: 2 },
-  { i: "analytics", x: 6, y: 0, w: 6, h: 2, minW: 2, minH: 2 },
-  { i: "stats", x: 6, y: 2, w: 3, h: 3, minW: 2, minH: 2 },
-  { i: "activity", x: 9, y: 2, w: 3, h: 3, minW: 2, minH: 2 },
-];
-
-// Widget titles for each type
-const widgetTitles: Record<string, string> = {
-  dashboard: "Dashboard",
-  analytics: "Analytics",
-  stats: "Stats",
-  activity: "Activity",
-  reports: "Reports",
-  trends: "Trends",
-  forecast: "Forecast",
-  pipeline: "Pipeline",
-  leaderboard: "Leaderboard",
-  targets: "Targets",
-  meetings: "Meetings",
-  tasks: "Tasks",
-};
-
-export function WidgetGrid({ className = "", layout: propLayout, pageId }: WidgetGridProps) {
+export function WidgetGrid({
+  className = "",
+  layout: propLayout,
+  widgets: propWidgets,
+  connections: propConnections = [],
+  pageId,
+  onApplyTemplate,
+}: WidgetGridProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 1200, height: 600 });
-  const [layout, setLayout] = useState<Layout[]>(propLayout || defaultLayout);
+  const [layout, setLayout] = useState<Layout[]>(propLayout || []);
+  const [aiQuery, setAiQuery] = useState("");
+  const [isThinking, setIsThinking] = useState(false);
 
   const cols = 12;
   const rows = 6;
   const margin: [number, number] = [0, 0];
+
+  // Sync layout from props
+  useEffect(() => {
+    setLayout(propLayout || []);
+  }, [propLayout]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -66,55 +60,99 @@ export function WidgetGrid({ className = "", layout: propLayout, pageId }: Widge
     return () => resizeObserver.disconnect();
   }, []);
 
-  // Row height calculated from container height to fill available space
   const rowHeight = Math.floor(dimensions.height / rows);
 
   const onLayoutChange = useCallback((newLayout: Layout[]) => {
     setLayout(newLayout);
   }, []);
 
-  const renderWidgetContent = (id: string) => {
-    const placeholderContent = (
-      <div
-        className="h-full w-full rounded border border-dashed border-stone-300 dark:border-stone-600"
-        style={{
-          backgroundImage:
-            "repeating-linear-gradient(-45deg, transparent, transparent 8px, rgba(161,161,170,0.1) 8px, rgba(161,161,170,0.1) 16px)",
-        }}
-      />
+  // Get widget type by layout item ID
+  const getWidgetType = useCallback(
+    (layoutId: string) => {
+      const widget = propWidgets?.find((w) => w.id === layoutId);
+      return widget?.type;
+    },
+    [propWidgets]
+  );
+
+  // Handle AI query submission
+  const handleAiSubmit = async () => {
+    if (!aiQuery.trim() || !onApplyTemplate) return;
+
+    setIsThinking(true);
+
+    // Simulate AI thinking
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    // Find matching template
+    const normalizedQuery = aiQuery.toLowerCase();
+    let matchedTemplate = pageTemplates.find((template) =>
+      template.keywords.some((keyword) => normalizedQuery.includes(keyword))
     );
 
-    // Get title from map or capitalize the id
-    const title = widgetTitles[id] || id.charAt(0).toUpperCase() + id.slice(1);
+    // Default to email workflow if no match
+    if (!matchedTemplate) {
+      matchedTemplate = pageTemplates[0];
+    }
 
-    return (
-      <>
-        <WidgetHeader
-          title={title}
-          action={
-            <CircleButton
-              variant="ghost"
-              icon={EllipsisHorizontalIcon}
-              label="Options"
-              size="sm"
-            />
-          }
-        />
-        <div className="flex-1 overflow-hidden p-4">{placeholderContent}</div>
-        <WidgetFooter>
-          <CircleButton variant="soft" icon={PlusIcon} label="Add" />
-          <CircleButton variant="soft-gray" icon={StarIcon} label="Favorite" />
-          <CircleButton
-            variant="soft-gray"
-            icon={EllipsisHorizontalIcon}
-            label="More"
-          />
-        </WidgetFooter>
-      </>
-    );
+    // Generate unique IDs for this page
+    const widgetIdMap = new Map<string, string>();
+    const widgets = matchedTemplate.widgets.map((w) => {
+      const newId = `${pageId}-${w.id}`;
+      widgetIdMap.set(w.id, newId);
+      return { ...w, id: newId };
+    });
+
+    const newLayout = matchedTemplate.layout.map((l) => ({
+      ...l,
+      i: widgetIdMap.get(l.i) || l.i,
+    }));
+
+    const connections = matchedTemplate.connections.map((c) => ({
+      ...c,
+      id: `${pageId}-${c.id}`,
+      sourceWidgetId: widgetIdMap.get(c.sourceWidgetId) || c.sourceWidgetId,
+      targetWidgetId: widgetIdMap.get(c.targetWidgetId) || c.targetWidgetId,
+    }));
+
+    onApplyTemplate(widgets, newLayout, connections);
+    setAiQuery("");
+    setIsThinking(false);
   };
 
-  // Generate grid cell layout for background (memoized)
+  // Handle preset selection
+  const handlePresetClick = (templateId: string) => {
+    const template = pageTemplates.find((t) => t.id === templateId);
+    if (!template || !onApplyTemplate) return;
+
+    setIsThinking(true);
+
+    setTimeout(() => {
+      const widgetIdMap = new Map<string, string>();
+      const widgets = template.widgets.map((w) => {
+        const newId = `${pageId}-${w.id}`;
+        widgetIdMap.set(w.id, newId);
+        return { ...w, id: newId };
+      });
+
+      const newLayout = template.layout.map((l) => ({
+        ...l,
+        i: widgetIdMap.get(l.i) || l.i,
+      }));
+
+      const connections = template.connections.map((c) => ({
+        ...c,
+        id: `${pageId}-${c.id}`,
+        sourceWidgetId: widgetIdMap.get(c.sourceWidgetId) || c.sourceWidgetId,
+        targetWidgetId: widgetIdMap.get(c.targetWidgetId) || c.targetWidgetId,
+      }));
+
+      onApplyTemplate(widgets, newLayout, connections);
+      setIsThinking(false);
+    }, 600);
+  };
+
+  // Generate grid cell layout for background
   const gridCellLayout = useMemo(() => {
     const cells: Layout[] = [];
     for (let row = 0; row < rows; row++) {
@@ -132,14 +170,17 @@ export function WidgetGrid({ className = "", layout: propLayout, pageId }: Widge
     return cells;
   }, [rows, cols]);
 
+  // Calculate workflow step numbers from connections
+  const workflowSteps = useMemo(() => {
+    const widgetIds = propWidgets?.map((w) => w.id) || [];
+    return calculateWorkflowSteps(widgetIds, propConnections);
+  }, [propWidgets, propConnections]);
+
   const isEmpty = layout.length === 0;
 
   return (
-    <div
-      ref={containerRef}
-      className={`relative h-full w-full ${className}`}
-    >
-      {/* Background grid cells - wrapped in absolute container */}
+    <div ref={containerRef} className={`relative h-full w-full ${className}`}>
+      {/* Background grid cells */}
       <div className="pointer-events-none absolute top-0 left-0 w-full">
         <GridLayout
           className="layout"
@@ -162,29 +203,88 @@ export function WidgetGrid({ className = "", layout: propLayout, pageId }: Widge
         </GridLayout>
       </div>
 
-      {/* Empty state for new pages */}
+      {/* Empty state with AI input */}
       {isEmpty && (
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <div className="flex flex-col items-center gap-4 text-center">
-            {/* Decorative empty grid icon */}
+          <div className="flex flex-col items-center gap-6 text-center max-w-md px-4">
+            {/* AI sparkle icon */}
             <div className="relative">
-              <div className="grid grid-cols-2 gap-2 opacity-40">
-                <div className="h-10 w-10 rounded-lg border-2 border-dashed border-stone-300 dark:border-stone-600" />
-                <div className="h-10 w-10 rounded-lg border-2 border-dashed border-stone-300 dark:border-stone-600" />
-                <div className="h-10 w-10 rounded-lg border-2 border-dashed border-stone-300 dark:border-stone-600" />
-                <div className="h-10 w-10 rounded-lg border-2 border-dashed border-stone-300 dark:border-stone-600" />
+              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/40 dark:to-primary-800/40 flex items-center justify-center">
+                <SparklesIcon className="h-7 w-7 text-primary-600 dark:text-primary-400" />
               </div>
-              <div className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-stone-900 dark:bg-stone-100">
-                <PlusIcon className="h-4 w-4 text-white dark:text-stone-900" />
+              {isThinking && (
+                <div className="absolute inset-0 rounded-2xl border-2 border-primary-400 animate-ping opacity-50" />
+              )}
+            </div>
+
+            <div>
+              <h3 className="text-base font-semibold text-stone-800 dark:text-stone-200">
+                What do you want to do?
+              </h3>
+              <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
+                Describe your task and AI will set up the right widgets
+              </p>
+            </div>
+
+            {/* AI Input */}
+            <div className="w-full">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={aiQuery}
+                  onChange={(e) => setAiQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleAiSubmit();
+                  }}
+                  placeholder="e.g., I want to write emails to my clients"
+                  disabled={isThinking}
+                  className="w-full px-4 py-3 pr-12 text-sm bg-white dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder:text-stone-400 dark:placeholder:text-stone-500 disabled:opacity-50"
+                />
+                <button
+                  onClick={handleAiSubmit}
+                  disabled={!aiQuery.trim() || isThinking}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-stone-900 dark:bg-white text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isThinking ? (
+                    <svg
+                      className="animate-spin h-4 w-4"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                  ) : (
+                    <SparklesIcon className="h-4 w-4" />
+                  )}
+                </button>
               </div>
             </div>
-            <div>
-              <h3 className="text-sm font-medium text-stone-700 dark:text-stone-300">
-                Empty canvas
-              </h3>
-              <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
-                Drag widgets here to build your page
-              </p>
+
+            {/* Quick presets */}
+            <div className="flex flex-wrap justify-center gap-2">
+              {pageTemplates.map((template) => (
+                <button
+                  key={template.id}
+                  onClick={() => handlePresetClick(template.id)}
+                  disabled={isThinking}
+                  className="px-3 py-1.5 text-xs font-medium rounded-full bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors disabled:opacity-50"
+                >
+                  {template.name}
+                </button>
+              ))}
             </div>
           </div>
         </div>
@@ -210,13 +310,25 @@ export function WidgetGrid({ className = "", layout: propLayout, pageId }: Widge
           maxRows={rows}
           autoSize={false}
         >
-          {layout.map((item) => (
-            <div key={item.i}>
-              <WidgetCard className="h-full">
-                {renderWidgetContent(item.i)}
-              </WidgetCard>
-            </div>
-          ))}
+          {layout.map((item) => {
+            const widgetType = getWidgetType(item.i);
+            const stepNumber = workflowSteps.get(item.i);
+            return (
+              <div key={item.i}>
+                {widgetType ? (
+                  <WidgetRenderer
+                    widgetId={item.i}
+                    type={widgetType}
+                    stepNumber={stepNumber}
+                  />
+                ) : (
+                  <div className="h-full rounded-2xl bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
+                    <span className="text-sm text-stone-400">Unknown widget</span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </GridLayout>
       )}
     </div>
