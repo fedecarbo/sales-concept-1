@@ -14,12 +14,12 @@ interface CircleButtonProps {
 
 const variantStyles = {
   primary:
-    "bg-indigo-600 text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:bg-indigo-500 dark:shadow-none dark:hover:bg-indigo-400 dark:focus-visible:outline-indigo-500",
-  soft: "bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-500/20 dark:text-indigo-400 dark:hover:bg-indigo-500/30",
+    "bg-primary-500 text-white shadow-xs hover:bg-primary-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 dark:shadow-none dark:hover:bg-primary-400",
+  soft: "bg-primary-500/10 text-primary-600 hover:bg-primary-500/20 dark:bg-primary-500/20 dark:text-primary-400 dark:hover:bg-primary-500/30",
   "soft-gray":
-    "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-white/10 dark:text-gray-300 dark:hover:bg-white/20",
+    "bg-stone-100 text-stone-600 hover:bg-stone-200 dark:bg-white/10 dark:text-stone-300 dark:hover:bg-white/20",
   ghost:
-    "text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:bg-white/10",
+    "text-stone-400 hover:text-stone-600 hover:bg-stone-100 dark:text-stone-400 dark:hover:text-stone-300 dark:hover:bg-white/10",
 };
 
 const sizeStyles = {

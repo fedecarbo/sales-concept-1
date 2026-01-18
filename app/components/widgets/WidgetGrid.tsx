@@ -76,7 +76,7 @@ export function WidgetGrid({ className = "", layout: propLayout, pageId }: Widge
   const renderWidgetContent = (id: string) => {
     const placeholderContent = (
       <div
-        className="h-full w-full rounded border border-dashed border-zinc-300 dark:border-zinc-600"
+        className="h-full w-full rounded border border-dashed border-stone-300 dark:border-stone-600"
         style={{
           backgroundImage:
             "repeating-linear-gradient(-45deg, transparent, transparent 8px, rgba(161,161,170,0.1) 8px, rgba(161,161,170,0.1) 16px)",
@@ -132,6 +132,8 @@ export function WidgetGrid({ className = "", layout: propLayout, pageId }: Widge
     return cells;
   }, [rows, cols]);
 
+  const isEmpty = layout.length === 0;
+
   return (
     <div
       ref={containerRef}
@@ -154,39 +156,69 @@ export function WidgetGrid({ className = "", layout: propLayout, pageId }: Widge
           {gridCellLayout.map((cell) => (
             <div
               key={cell.i}
-              className="rounded-2xl border border-zinc-200/50 dark:border-zinc-700/50"
+              className="rounded-2xl border border-stone-200/50 dark:border-stone-700/50"
             />
           ))}
         </GridLayout>
       </div>
 
-      {/* Actual widgets */}
-      <GridLayout
-        className="layout"
-        layout={layout}
-        cols={cols}
-        rowHeight={rowHeight}
-        width={dimensions.width}
-        margin={margin}
-        containerPadding={[0, 0]}
-        onLayoutChange={onLayoutChange}
-        draggableHandle=".widget-drag-handle"
-        resizeHandles={["se", "sw", "ne", "nw", "e", "w", "n", "s"]}
-        useCSSTransforms={true}
-        compactType={null}
-        preventCollision={true}
-        isBounded={true}
-        maxRows={rows}
-        autoSize={false}
-      >
-        {layout.map((item) => (
-          <div key={item.i}>
-            <WidgetCard className="h-full">
-              {renderWidgetContent(item.i)}
-            </WidgetCard>
+      {/* Empty state for new pages */}
+      {isEmpty && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <div className="flex flex-col items-center gap-4 text-center">
+            {/* Decorative empty grid icon */}
+            <div className="relative">
+              <div className="grid grid-cols-2 gap-2 opacity-40">
+                <div className="h-10 w-10 rounded-lg border-2 border-dashed border-stone-300 dark:border-stone-600" />
+                <div className="h-10 w-10 rounded-lg border-2 border-dashed border-stone-300 dark:border-stone-600" />
+                <div className="h-10 w-10 rounded-lg border-2 border-dashed border-stone-300 dark:border-stone-600" />
+                <div className="h-10 w-10 rounded-lg border-2 border-dashed border-stone-300 dark:border-stone-600" />
+              </div>
+              <div className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-stone-900 dark:bg-stone-100">
+                <PlusIcon className="h-4 w-4 text-white dark:text-stone-900" />
+              </div>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-stone-700 dark:text-stone-300">
+                Empty canvas
+              </h3>
+              <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+                Drag widgets here to build your page
+              </p>
+            </div>
           </div>
-        ))}
-      </GridLayout>
+        </div>
+      )}
+
+      {/* Actual widgets */}
+      {!isEmpty && (
+        <GridLayout
+          className="layout"
+          layout={layout}
+          cols={cols}
+          rowHeight={rowHeight}
+          width={dimensions.width}
+          margin={margin}
+          containerPadding={[0, 0]}
+          onLayoutChange={onLayoutChange}
+          draggableHandle=".widget-drag-handle"
+          resizeHandles={["se", "sw", "ne", "nw", "e", "w", "n", "s"]}
+          useCSSTransforms={true}
+          compactType={null}
+          preventCollision={true}
+          isBounded={true}
+          maxRows={rows}
+          autoSize={false}
+        >
+          {layout.map((item) => (
+            <div key={item.i}>
+              <WidgetCard className="h-full">
+                {renderWidgetContent(item.i)}
+              </WidgetCard>
+            </div>
+          ))}
+        </GridLayout>
+      )}
     </div>
   );
 }

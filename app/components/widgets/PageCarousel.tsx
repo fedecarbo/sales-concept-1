@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/20/solid";
+import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, PencilIcon, CheckIcon } from "@heroicons/react/20/solid";
 import { WidgetGrid } from "./WidgetGrid";
 import { Layout } from "react-grid-layout";
 
@@ -22,26 +22,6 @@ export const defaultPages: Page[] = [
       { i: "activity", x: 9, y: 2, w: 3, h: 3, minW: 2, minH: 2 },
     ],
   },
-  {
-    id: "page-2",
-    name: "Reports",
-    layout: [
-      { i: "reports", x: 0, y: 0, w: 8, h: 3, minW: 2, minH: 2 },
-      { i: "trends", x: 8, y: 0, w: 4, h: 5, minW: 2, minH: 2 },
-      { i: "forecast", x: 0, y: 3, w: 4, h: 2, minW: 2, minH: 2 },
-      { i: "pipeline", x: 4, y: 3, w: 4, h: 2, minW: 2, minH: 2 },
-    ],
-  },
-  {
-    id: "page-3",
-    name: "Team",
-    layout: [
-      { i: "leaderboard", x: 0, y: 0, w: 4, h: 5, minW: 2, minH: 2 },
-      { i: "targets", x: 4, y: 0, w: 4, h: 3, minW: 2, minH: 2 },
-      { i: "meetings", x: 8, y: 0, w: 4, h: 3, minW: 2, minH: 2 },
-      { i: "tasks", x: 4, y: 3, w: 8, h: 2, minW: 2, minH: 2 },
-    ],
-  },
 ];
 
 // Navigation component to be used in the header
@@ -49,63 +29,155 @@ interface PageCarouselNavProps {
   pages: Page[];
   currentPage: number;
   onPageChange: (index: number) => void;
+  onAddPage?: () => void;
+  onRenamePage?: (index: number, newName: string) => void;
 }
 
-export function PageCarouselNav({ pages, currentPage, onPageChange }: PageCarouselNavProps) {
-  const goToPrevious = () => {
-    if (currentPage > 0) {
-      onPageChange(currentPage - 1);
-    }
+export function PageCarouselNav({
+  pages,
+  currentPage,
+  onPageChange,
+  onAddPage,
+  onRenamePage,
+}: PageCarouselNavProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const currentPageData = pages[currentPage];
+  const hasMultiplePages = pages.length > 1;
+
+  const startEditing = () => {
+    setEditValue(currentPageData?.name || "");
+    setIsEditing(true);
   };
 
-  const goToNext = () => {
-    if (currentPage < pages.length - 1) {
-      onPageChange(currentPage + 1);
+  const saveEdit = () => {
+    if (editValue.trim() && onRenamePage) {
+      onRenamePage(currentPage, editValue.trim());
+    }
+    setIsEditing(false);
+  };
+
+  const cancelEdit = () => {
+    setIsEditing(false);
+    setEditValue("");
+  };
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      saveEdit();
+    } else if (e.key === "Escape") {
+      cancelEdit();
     }
   };
 
   return (
-    <div className="flex items-center justify-center gap-3">
-      {/* Previous button */}
-      <button
-        onClick={goToPrevious}
-        disabled={currentPage === 0}
-        className="rounded-full p-0.5 text-zinc-400 transition-colors hover:text-zinc-600 disabled:opacity-0 dark:text-zinc-500 dark:hover:text-zinc-300"
-        aria-label="Previous page"
-      >
-        <ChevronLeftIcon className="h-4 w-4" />
-      </button>
+    <div className="flex items-center justify-center gap-1.5">
+      {/* Left arrow - only show if multiple pages */}
+      {hasMultiplePages && (
+        <button
+          onClick={() => currentPage > 0 && onPageChange(currentPage - 1)}
+          className={`rounded-full p-0.5 transition-all duration-200 ${
+            currentPage > 0
+              ? "text-stone-400 hover:text-stone-600 dark:text-stone-500 dark:hover:text-stone-300"
+              : "text-stone-200 cursor-default dark:text-stone-700"
+          }`}
+          disabled={currentPage === 0}
+          aria-label="Previous page"
+        >
+          <ChevronLeftIcon className="h-4 w-4" />
+        </button>
+      )}
 
-      {/* Page title and dots */}
-      <div className="flex flex-col items-center gap-0.5">
-        <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-          {pages[currentPage]?.name}
-        </span>
-        <div className="flex items-center gap-1">
-          {pages.map((page, index) => (
+      {/* Page name - editable */}
+      <div className="relative flex items-center">
+        {isEditing ? (
+          <div className="flex items-center gap-1">
+            <input
+              ref={inputRef}
+              type="text"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onBlur={saveEdit}
+              className="w-24 bg-transparent text-center text-sm font-semibold text-stone-900 outline-none ring-1 ring-stone-300 rounded px-1.5 py-0.5 dark:text-white dark:ring-stone-600"
+              maxLength={20}
+            />
             <button
-              key={page.id}
+              onClick={saveEdit}
+              className="rounded-full p-0.5 text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200 transition-colors"
+              aria-label="Save name"
+            >
+              <CheckIcon className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={startEditing}
+            className="group flex items-center gap-1.5 rounded-md px-2 py-0.5 transition-all duration-200 hover:bg-stone-100 dark:hover:bg-stone-800"
+          >
+            <span className="text-sm font-semibold text-stone-900 dark:text-white">
+              {currentPageData?.name}
+            </span>
+            <PencilIcon className="h-3 w-3 text-stone-300 opacity-0 transition-opacity duration-200 group-hover:opacity-100 dark:text-stone-600" />
+          </button>
+        )}
+      </div>
+
+      {/* Right arrow - only show if multiple pages */}
+      {hasMultiplePages && (
+        <button
+          onClick={() => currentPage < pages.length - 1 && onPageChange(currentPage + 1)}
+          className={`rounded-full p-0.5 transition-all duration-200 ${
+            currentPage < pages.length - 1
+              ? "text-stone-400 hover:text-stone-600 dark:text-stone-500 dark:hover:text-stone-300"
+              : "text-stone-200 cursor-default dark:text-stone-700"
+          }`}
+          disabled={currentPage === pages.length - 1}
+          aria-label="Next page"
+        >
+          <ChevronRightIcon className="h-4 w-4" />
+        </button>
+      )}
+
+      {/* Page dots indicator */}
+      {hasMultiplePages && (
+        <div className="ml-1 flex items-center gap-1">
+          {pages.map((_, index) => (
+            <button
+              key={index}
               onClick={() => onPageChange(index)}
-              className={`h-1 rounded-full transition-all ${
+              className={`h-1.5 rounded-full transition-all duration-300 ${
                 index === currentPage
-                  ? "w-3 bg-zinc-400 dark:bg-zinc-500"
-                  : "w-1 bg-zinc-300 hover:bg-zinc-400 dark:bg-zinc-600 dark:hover:bg-zinc-500"
+                  ? "w-4 bg-stone-700 dark:bg-stone-300"
+                  : "w-1.5 bg-stone-300 hover:bg-stone-400 dark:bg-stone-600 dark:hover:bg-stone-500"
               }`}
-              aria-label={`Go to ${page.name}`}
-              aria-current={index === currentPage ? "page" : undefined}
+              aria-label={`Go to page ${index + 1}`}
             />
           ))}
         </div>
-      </div>
+      )}
 
-      {/* Next button */}
+      {/* Divider */}
+      <div className="mx-1 h-4 w-px bg-stone-200 dark:bg-stone-700" />
+
+      {/* Add page button */}
       <button
-        onClick={goToNext}
-        disabled={currentPage === pages.length - 1}
-        className="rounded-full p-0.5 text-zinc-400 transition-colors hover:text-zinc-600 disabled:opacity-0 dark:text-zinc-500 dark:hover:text-zinc-300"
-        aria-label="Next page"
+        onClick={onAddPage}
+        className="group flex items-center gap-1 rounded-full px-2 py-1 text-stone-500 transition-all duration-200 hover:bg-stone-100 hover:text-stone-700 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-200"
+        aria-label="Add new page"
       >
-        <ChevronRightIcon className="h-4 w-4" />
+        <PlusIcon className="h-4 w-4" />
+        <span className="text-xs font-medium opacity-0 max-w-0 overflow-hidden transition-all duration-200 group-hover:opacity-100 group-hover:max-w-[60px]">
+          New
+        </span>
       </button>
     </div>
   );
