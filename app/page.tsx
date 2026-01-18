@@ -1,17 +1,32 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Layout } from "react-grid-layout";
-import { MagnifyingGlassIcon, BellIcon, Cog6ToothIcon, ArrowUpIcon } from "@heroicons/react/20/solid";
+import { MagnifyingGlassIcon, BellIcon, Cog6ToothIcon, SparklesIcon } from "@heroicons/react/20/solid";
 import { PageCarousel, PageCarouselNav, defaultPages } from "./components/widgets";
 import { WidgetProvider } from "./context/WidgetContext";
-import { Page, WidgetInstance, WidgetConnection } from "./types";
+import { CommandPalette } from "./components/CommandPalette";
+import { Page, WidgetInstance, WidgetConnection, WidgetType } from "./types";
+import { pageTemplates, applyTemplate, PageTemplate } from "./lib/aiTemplates";
+import { widgetRegistry } from "./lib/widgetRegistry";
 
 export default function Home() {
-  const [message, setMessage] = useState("");
-  const [submitted, setSubmitted] = useState(false);
   const [pages, setPages] = useState<Page[]>(defaultPages);
   const [currentPage, setCurrentPage] = useState(0);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [paletteDefaultTab, setPaletteDefaultTab] = useState<"search" | "ai">("search");
+
+  // Keyboard shortcut for command palette (Cmd+K)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setPaletteOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const handleAddPage = useCallback(() => {
     const newPageNumber = pages.length + 1;
@@ -72,51 +87,72 @@ export default function Home() {
     []
   );
 
-  const handleSubmit = () => {
-    if (message.trim()) {
-      setSubmitted(true);
-      setMessage("");
-    }
-  };
+  const handleApplyTemplate = useCallback((template: PageTemplate) => {
+    const currentPageData = pages[currentPage];
+    const updates = applyTemplate(template, currentPageData.id);
+
+    setPages((prev) =>
+      prev.map((page, i) =>
+        i === currentPage
+          ? {
+              ...page,
+              widgets: updates.widgets || page.widgets,
+              layout: updates.layout || page.layout,
+              connections: updates.connections || page.connections,
+            }
+          : page
+      )
+    );
+  }, [currentPage, pages]);
+
+  const handleAddWidget = useCallback((widgetType: WidgetType) => {
+    const currentPageData = pages[currentPage];
+    const widgetDef = widgetRegistry[widgetType];
+    const newWidgetId = `${currentPageData.id}-w${Date.now()}`;
+
+    const newWidget: WidgetInstance = {
+      id: newWidgetId,
+      type: widgetType,
+    };
+
+    // Find a spot for the new widget (simple placement at origin)
+    const newLayoutItem: Layout = {
+      i: newWidgetId,
+      x: 0,
+      y: 0,
+      w: widgetDef.defaultSize.w,
+      h: widgetDef.defaultSize.h,
+      minW: widgetDef.minSize.w,
+      minH: widgetDef.minSize.h,
+    };
+
+    setPages((prev) =>
+      prev.map((page, i) =>
+        i === currentPage
+          ? {
+              ...page,
+              widgets: [...page.widgets, newWidget],
+              layout: [...page.layout, newLayoutItem],
+            }
+          : page
+      )
+    );
+  }, [currentPage, pages]);
+
+  const openPaletteSearch = useCallback(() => {
+    setPaletteDefaultTab("search");
+    setPaletteOpen(true);
+  }, []);
+
+  const openPaletteAI = useCallback(() => {
+    setPaletteDefaultTab("ai");
+    setPaletteOpen(true);
+  }, []);
 
   return (
     <WidgetProvider>
       <div className="flex h-screen flex-col bg-stone-50 dark:bg-stone-950">
-        {!submitted ? (
-          // Empty state - chat centered
-          <div className="flex flex-1 flex-col items-center justify-center px-4">
-            <div className="w-full max-w-2xl">
-              <h1 className="mb-8 text-center text-2xl font-semibold text-stone-900 dark:text-white">
-                What can I help you with?
-              </h1>
-              <div className="relative">
-                <textarea
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Ask anything..."
-                  rows={1}
-                  className="block w-full resize-none rounded-xl border-0 bg-white px-4 py-3 pr-12 text-stone-900 ring-1 ring-inset ring-stone-300 placeholder:text-stone-400 focus:ring-2 focus:ring-inset focus:ring-stone-900 dark:bg-stone-900 dark:text-white dark:ring-stone-700 dark:placeholder:text-stone-500 dark:focus:ring-stone-100 sm:text-sm sm:leading-6"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSubmit();
-                    }
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg bg-stone-900 p-1.5 text-white shadow-sm hover:bg-stone-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-900 dark:bg-white dark:text-stone-900 dark:hover:bg-stone-200"
-                  aria-label="Send message"
-                >
-                  <ArrowUpIcon className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          // Widget view - header + grid
-          <div className="grid h-full grid-rows-[auto_1fr] gap-2 p-6">
+        <div className="grid h-full grid-rows-[auto_1fr] gap-2 p-6">
             {/* Header - 3-column grid for true centering */}
             <div className="mx-2.5 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
               {/* Left section */}
@@ -151,22 +187,25 @@ export default function Home() {
 
               {/* Right section */}
               <div className="flex items-center justify-end gap-2">
-                {/* Search input pill */}
-                <div className="flex h-10 items-center rounded-full bg-stone-50 px-3 ring-1 ring-stone-200 dark:bg-stone-950 dark:ring-stone-800">
-                  <div className="relative">
-                    <div className="grid grid-cols-1">
-                      <input
-                        type="text"
-                        className="col-start-1 row-start-1 w-44 bg-transparent pr-3 pl-6 text-sm text-stone-900 outline-none placeholder:text-stone-500 dark:text-white dark:placeholder:text-stone-400"
-                        placeholder="Search..."
-                      />
-                      <MagnifyingGlassIcon
-                        className="pointer-events-none col-start-1 row-start-1 size-3.5 self-center text-stone-400 dark:text-stone-500"
-                        aria-hidden="true"
-                      />
-                    </div>
-                  </div>
-                </div>
+                {/* Search icon pill */}
+                <button
+                  type="button"
+                  onClick={openPaletteSearch}
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-stone-50 ring-1 ring-stone-200 transition-colors hover:bg-stone-100 dark:bg-stone-950 dark:ring-stone-800 dark:hover:bg-stone-900"
+                  aria-label="Search (⌘K)"
+                >
+                  <MagnifyingGlassIcon className="size-4 text-stone-500 dark:text-stone-400" />
+                </button>
+
+                {/* AI icon pill */}
+                <button
+                  type="button"
+                  onClick={openPaletteAI}
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-stone-50 ring-1 ring-stone-200 transition-colors hover:bg-stone-100 dark:bg-stone-950 dark:ring-stone-800 dark:hover:bg-stone-900"
+                  aria-label="AI Assistant"
+                >
+                  <SparklesIcon className="size-4 text-stone-500 dark:text-stone-400" />
+                </button>
 
                 {/* Icon buttons pill */}
                 <div className="flex h-10 items-center gap-1 rounded-full bg-stone-50 px-2 ring-1 ring-stone-200 dark:bg-stone-950 dark:ring-stone-800">
@@ -186,18 +225,16 @@ export default function Home() {
                   >
                     <Cog6ToothIcon className="size-4" aria-hidden="true" />
                   </button>
+                  <button
+                    type="button"
+                    className="rounded-full p-0.5"
+                    aria-label="User menu"
+                  >
+                    <span className="inline-flex size-7 items-center justify-center rounded-full bg-stone-900 dark:bg-stone-100">
+                      <span className="text-xs font-medium text-white dark:text-stone-900">FC</span>
+                    </span>
+                  </button>
                 </div>
-
-                {/* User avatar pill */}
-                <button
-                  type="button"
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-stone-50 ring-1 ring-stone-200 dark:bg-stone-950 dark:ring-stone-800"
-                  aria-label="User menu"
-                >
-                  <span className="inline-flex size-7 items-center justify-center rounded-full bg-stone-900 dark:bg-stone-100">
-                    <span className="text-xs font-medium text-white dark:text-stone-900">FC</span>
-                  </span>
-                </button>
               </div>
             </div>
 
@@ -209,9 +246,20 @@ export default function Home() {
               onUpdatePage={handleUpdatePage}
               className=""
             />
-          </div>
-        )}
+        </div>
       </div>
+
+      {/* Command Palette */}
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        defaultTab={paletteDefaultTab}
+        pages={pages}
+        currentPage={currentPage}
+        onNavigateToPage={setCurrentPage}
+        onApplyTemplate={handleApplyTemplate}
+        onAddWidget={handleAddWidget}
+      />
     </WidgetProvider>
   );
 }

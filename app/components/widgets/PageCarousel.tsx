@@ -291,6 +291,27 @@ export function PageCarousel({
     [onUpdatePage]
   );
 
+  const handleRemoveWidget = useCallback(
+    (pageIndex: number, page: Page) => (widgetId: string) => {
+      if (onUpdatePage) {
+        // Filter out the widget from widgets array
+        const updatedWidgets = page.widgets.filter((w) => w.id !== widgetId);
+        // Filter out the layout item
+        const updatedLayout = page.layout.filter((l) => l.i !== widgetId);
+        // Filter out any connections involving this widget
+        const updatedConnections = page.connections.filter(
+          (c) => c.sourceWidgetId !== widgetId && c.targetWidgetId !== widgetId
+        );
+        onUpdatePage(pageIndex, {
+          widgets: updatedWidgets,
+          layout: updatedLayout,
+          connections: updatedConnections,
+        });
+      }
+    },
+    [onUpdatePage]
+  );
+
   return (
     <div
       ref={containerRef}
@@ -309,6 +330,7 @@ export function PageCarousel({
             connections={page.connections}
             pageId={page.id}
             onApplyTemplate={handleApplyTemplate(index)}
+            onRemoveWidget={handleRemoveWidget(index, page)}
           />
         </div>
       ))}

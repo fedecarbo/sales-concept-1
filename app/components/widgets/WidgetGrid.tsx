@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import GridLayout, { Layout } from "react-grid-layout";
-import { SparklesIcon } from "@heroicons/react/20/solid";
+import { SparklesIcon, XMarkIcon } from "@heroicons/react/20/solid";
 import { WidgetInstance, WidgetConnection } from "@/app/types";
 import { WidgetRenderer } from "./WidgetRenderer";
 import { pageTemplates } from "@/app/lib/aiTemplates";
@@ -19,6 +19,7 @@ interface WidgetGridProps {
     layout: Layout[],
     connections: WidgetConnection[]
   ) => void;
+  onRemoveWidget?: (widgetId: string) => void;
 }
 
 export function WidgetGrid({
@@ -28,6 +29,7 @@ export function WidgetGrid({
   connections: propConnections = [],
   pageId,
   onApplyTemplate,
+  onRemoveWidget,
 }: WidgetGridProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 1200, height: 600 });
@@ -337,7 +339,7 @@ export function WidgetGrid({
               ? (stepNumber - 1) * 150
               : undefined;
             return (
-              <div key={item.i}>
+              <div key={item.i} className="group/widget relative">
                 {widgetType ? (
                   <WidgetRenderer
                     widgetId={item.i}
@@ -349,6 +351,19 @@ export function WidgetGrid({
                   <div className="h-full rounded-2xl bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
                     <span className="text-sm text-stone-400">Unknown widget</span>
                   </div>
+                )}
+                {/* Remove widget button - appears on hover */}
+                {onRemoveWidget && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemoveWidget(item.i);
+                    }}
+                    className="absolute -top-2 -right-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-stone-900 text-white opacity-0 shadow-lg transition-opacity hover:bg-red-600 group-hover/widget:opacity-100 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-red-500 dark:hover:text-white"
+                    aria-label="Remove widget"
+                  >
+                    <XMarkIcon className="h-4 w-4" />
+                  </button>
                 )}
               </div>
             );
