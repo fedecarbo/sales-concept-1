@@ -189,7 +189,7 @@ export function PageCarousel({ pages, currentPage, onPageChange, className = "" 
     <div
       ref={containerRef}
       onScroll={handleScroll}
-      className={`flex min-h-0 flex-1 snap-x snap-mandatory overflow-x-auto scrollbar-hide ${className}`}
+      className={`flex h-full min-h-0 snap-x snap-mandatory overflow-x-auto scrollbar-hide ${className}`}
       style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
     >
       {pages.map((page) => (

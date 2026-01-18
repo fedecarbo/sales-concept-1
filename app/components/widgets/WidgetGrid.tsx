@@ -43,10 +43,11 @@ const widgetTitles: Record<string, string> = {
 
 export function WidgetGrid({ className = "", layout: propLayout, pageId }: WidgetGridProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [containerWidth, setContainerWidth] = useState(1200);
+  const [dimensions, setDimensions] = useState({ width: 1200, height: 600 });
   const [layout, setLayout] = useState<Layout[]>(propLayout || defaultLayout);
 
   const cols = 12;
+  const rows = 6;
   const margin: [number, number] = [0, 0];
 
   useEffect(() => {
@@ -54,7 +55,10 @@ export function WidgetGrid({ className = "", layout: propLayout, pageId }: Widge
 
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        setContainerWidth(entry.contentRect.width);
+        setDimensions({
+          width: entry.contentRect.width,
+          height: entry.contentRect.height,
+        });
       }
     });
 
@@ -62,19 +66,8 @@ export function WidgetGrid({ className = "", layout: propLayout, pageId }: Widge
     return () => resizeObserver.disconnect();
   }, []);
 
-  // Fixed number of rows that should fit the screen initially
-  const minRows = 5;
-
-  // Calculate column width for reference
-  const colWidth = (containerWidth - margin[0] * (cols - 1)) / cols;
-
-  // Row height is shorter than column width to create rectangular cells
-  // This ensures 6 rows fit comfortably in the screen height
-  const rowHeight = colWidth * 0.6;
-
-  // Actual rows needed for the background grid (can exceed minRows when widgets grow)
-  const layoutMaxRow = layout.reduce((max, item) => Math.max(max, item.y + item.h), 0);
-  const rows = Math.max(layoutMaxRow, minRows);
+  // Row height calculated from container height to fill available space
+  const rowHeight = Math.floor(dimensions.height / rows);
 
   const onLayoutChange = useCallback((newLayout: Layout[]) => {
     setLayout(newLayout);
@@ -151,7 +144,7 @@ export function WidgetGrid({ className = "", layout: propLayout, pageId }: Widge
           layout={gridCellLayout}
           cols={cols}
           rowHeight={rowHeight}
-          width={containerWidth}
+          width={dimensions.width}
           margin={margin}
           containerPadding={[0, 0]}
           isDraggable={false}
@@ -173,15 +166,18 @@ export function WidgetGrid({ className = "", layout: propLayout, pageId }: Widge
         layout={layout}
         cols={cols}
         rowHeight={rowHeight}
-        width={containerWidth}
+        width={dimensions.width}
         margin={margin}
         containerPadding={[0, 0]}
         onLayoutChange={onLayoutChange}
         draggableHandle=".widget-drag-handle"
         resizeHandles={["se", "sw", "ne", "nw", "e", "w", "n", "s"]}
         useCSSTransforms={true}
-        compactType="vertical"
-        preventCollision={false}
+        compactType={null}
+        preventCollision={true}
+        isBounded={true}
+        maxRows={rows}
+        autoSize={false}
       >
         {layout.map((item) => (
           <div key={item.i}>

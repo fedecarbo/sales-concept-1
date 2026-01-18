@@ -55,13 +55,21 @@ export default function Home() {
         </div>
       ) : (
         // Widget view - header + grid
-        <div className="flex min-h-0 flex-1 flex-col px-6">
+        <div className="grid h-full grid-rows-[auto_1fr] gap-2 p-6">
           {/* Header - floating pill container */}
-          <div className="mx-2.5 mt-4 flex items-center gap-4 rounded-full bg-white px-4 py-2 shadow-sm ring-1 ring-black/5 dark:bg-zinc-900 dark:ring-white/10">
-            {/* Logo on the left */}
-            <p className="text-lg font-bold text-zinc-900 dark:text-white">
-              Sales prototype
-            </p>
+          <div className="mx-2.5 flex items-center gap-4 rounded-2xl bg-white px-4 py-2.5 shadow-sm ring-1 ring-black/5 dark:bg-zinc-900 dark:ring-white/10">
+            {/* Logo on the left - widget grid shape */}
+            <svg
+              className="h-6 w-6 text-zinc-900 dark:text-white"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect x="1" y="1" width="10" height="10" rx="2" fill="currentColor" />
+              <rect x="13" y="1" width="10" height="10" rx="2" fill="currentColor" opacity="0.5" />
+              <rect x="1" y="13" width="10" height="10" rx="2" fill="currentColor" opacity="0.5" />
+              <rect x="13" y="13" width="10" height="10" rx="2" fill="currentColor" opacity="0.25" />
+            </svg>
 
             {/* Carousel navigation - centered */}
             <div className="flex flex-1 justify-center">
@@ -74,7 +82,7 @@ export default function Home() {
 
             {/* Search input - right side */}
             <div className="w-56">
-              <div className="relative rounded-full bg-zinc-100/80 ring-1 ring-black/5 dark:bg-zinc-800/80 dark:ring-white/10">
+              <div className="relative rounded-xl bg-zinc-100/80 ring-1 ring-black/5 dark:bg-zinc-800/80 dark:ring-white/10">
                 <div className="grid grid-cols-1">
                   <input
                     type="text"
@@ -91,13 +99,11 @@ export default function Home() {
           </div>
 
           {/* Page Carousel */}
-          <div className="mt-2 min-h-0 flex-1">
-            <PageCarousel
-              pages={pages}
-              currentPage={currentPage}
-              onPageChange={setCurrentPage}
-            />
-          </div>
+          <PageCarousel
+            pages={pages}
+            currentPage={currentPage}
+            onPageChange={setCurrentPage}
+          />
         </div>
       )}
     </div>
