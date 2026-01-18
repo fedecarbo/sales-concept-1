@@ -11,9 +11,10 @@ import { PillButton, CircleButton } from "../../ui";
 interface ClientSelectorProps {
   widgetId: string;
   stepNumber?: number;
+  animationDelay?: number;
 }
 
-export function ClientSelector({ widgetId, stepNumber }: ClientSelectorProps) {
+export function ClientSelector({ widgetId, stepNumber, animationDelay }: ClientSelectorProps) {
   const { state, actions, clients } = useWidget();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -29,7 +30,7 @@ export function ClientSelector({ widgetId, stepNumber }: ClientSelectorProps) {
   }, [clients, searchQuery]);
 
   return (
-    <WidgetCard className="h-full" stepNumber={stepNumber}>
+    <WidgetCard className="h-full" stepNumber={stepNumber} animationDelay={animationDelay}>
       <WidgetHeader
         title="Clients"
         subtitle={`${clients.length} contacts`}

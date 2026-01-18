@@ -14,9 +14,10 @@ import { WidgetHeader } from "../WidgetHeader";
 interface EmailSenderProps {
   widgetId: string;
   stepNumber?: number;
+  animationDelay?: number;
 }
 
-export function EmailSender({ widgetId, stepNumber }: EmailSenderProps) {
+export function EmailSender({ widgetId, stepNumber, animationDelay }: EmailSenderProps) {
   const { state, actions } = useWidget();
   const { emailDraft } = state;
   const [isSending, setIsSending] = useState(false);
@@ -33,7 +34,7 @@ export function EmailSender({ widgetId, stepNumber }: EmailSenderProps) {
 
   if (!emailDraft) {
     return (
-      <WidgetCard className="h-full" stepNumber={stepNumber}>
+      <WidgetCard className="h-full" stepNumber={stepNumber} animationDelay={animationDelay}>
         <WidgetHeader title="Send Email" subtitle="Ready to send" />
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="text-center">
@@ -59,7 +60,7 @@ export function EmailSender({ widgetId, stepNumber }: EmailSenderProps) {
   const isSent = emailDraft.status === "sent";
 
   return (
-    <WidgetCard className="h-full" stepNumber={stepNumber}>
+    <WidgetCard className="h-full" stepNumber={stepNumber} animationDelay={animationDelay}>
       <WidgetHeader
         title="Send Email"
         subtitle={

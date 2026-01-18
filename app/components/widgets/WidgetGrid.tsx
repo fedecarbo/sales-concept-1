@@ -34,6 +34,8 @@ export function WidgetGrid({
   const [layout, setLayout] = useState<Layout[]>(propLayout || []);
   const [aiQuery, setAiQuery] = useState("");
   const [isThinking, setIsThinking] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const cols = 12;
   const rows = 6;
@@ -58,6 +60,13 @@ export function WidgetGrid({
 
     resizeObserver.observe(containerRef.current);
     return () => resizeObserver.disconnect();
+  }, []);
+
+  // Cleanup animation timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current);
+    };
   }, []);
 
   const rowHeight = Math.floor(dimensions.height / rows);
@@ -118,6 +127,11 @@ export function WidgetGrid({
     onApplyTemplate(widgets, newLayout, connections);
     setAiQuery("");
     setIsThinking(false);
+
+    // Trigger staggered animation
+    setIsAnimating(true);
+    if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current);
+    animationTimeoutRef.current = setTimeout(() => setIsAnimating(false), 1500);
   };
 
   // Handle preset selection
@@ -149,6 +163,11 @@ export function WidgetGrid({
 
       onApplyTemplate(widgets, newLayout, connections);
       setIsThinking(false);
+
+      // Trigger staggered animation
+      setIsAnimating(true);
+      if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current);
+      animationTimeoutRef.current = setTimeout(() => setIsAnimating(false), 1500);
     }, 600);
   };
 
@@ -313,6 +332,10 @@ export function WidgetGrid({
           {layout.map((item) => {
             const widgetType = getWidgetType(item.i);
             const stepNumber = workflowSteps.get(item.i);
+            // Stagger animation delay based on step number (150ms per step)
+            const animationDelay = isAnimating && stepNumber !== undefined
+              ? (stepNumber - 1) * 150
+              : undefined;
             return (
               <div key={item.i}>
                 {widgetType ? (
@@ -320,6 +343,7 @@ export function WidgetGrid({
                     widgetId={item.i}
                     type={widgetType}
                     stepNumber={stepNumber}
+                    animationDelay={animationDelay}
                   />
                 ) : (
                   <div className="h-full rounded-2xl bg-stone-100 dark:bg-stone-800 flex items-center justify-center">

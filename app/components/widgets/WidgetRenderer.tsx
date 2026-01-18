@@ -11,20 +11,21 @@ interface WidgetRendererProps {
   widgetId: string;
   type: WidgetType;
   stepNumber?: number;
+  animationDelay?: number;
 }
 
-export function WidgetRenderer({ widgetId, type, stepNumber }: WidgetRendererProps) {
+export function WidgetRenderer({ widgetId, type, stepNumber, animationDelay }: WidgetRendererProps) {
   switch (type) {
     case "client-selector":
-      return <ClientSelector widgetId={widgetId} stepNumber={stepNumber} />;
+      return <ClientSelector widgetId={widgetId} stepNumber={stepNumber} animationDelay={animationDelay} />;
     case "context-viewer":
-      return <ContextViewer widgetId={widgetId} stepNumber={stepNumber} />;
+      return <ContextViewer widgetId={widgetId} stepNumber={stepNumber} animationDelay={animationDelay} />;
     case "email-composer":
-      return <EmailComposer widgetId={widgetId} stepNumber={stepNumber} />;
+      return <EmailComposer widgetId={widgetId} stepNumber={stepNumber} animationDelay={animationDelay} />;
     case "email-sender":
-      return <EmailSender widgetId={widgetId} stepNumber={stepNumber} />;
+      return <EmailSender widgetId={widgetId} stepNumber={stepNumber} animationDelay={animationDelay} />;
     case "activity-feed":
-      return <ActivityFeed widgetId={widgetId} stepNumber={stepNumber} />;
+      return <ActivityFeed widgetId={widgetId} stepNumber={stepNumber} animationDelay={animationDelay} />;
     default:
       return (
         <div className="flex h-full items-center justify-center text-stone-400">

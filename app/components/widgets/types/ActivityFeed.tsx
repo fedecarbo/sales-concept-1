@@ -20,6 +20,7 @@ import { Interaction } from "@/app/types";
 interface ActivityFeedProps {
   widgetId: string;
   stepNumber?: number;
+  animationDelay?: number;
 }
 
 const interactionIcons: Record<string, typeof EnvelopeIcon> = {
@@ -55,7 +56,7 @@ function formatDate(dateStr: string): string {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-export function ActivityFeed({ widgetId, stepNumber }: ActivityFeedProps) {
+export function ActivityFeed({ widgetId, stepNumber, animationDelay }: ActivityFeedProps) {
   const { state } = useWidget();
   const { selectedClient, clientContext } = state;
 
@@ -67,7 +68,7 @@ export function ActivityFeed({ widgetId, stepNumber }: ActivityFeedProps) {
   const filteredByClient = selectedClient && clientContext;
 
   return (
-    <WidgetCard className="h-full" stepNumber={stepNumber}>
+    <WidgetCard className="h-full" stepNumber={stepNumber} animationDelay={animationDelay}>
       <WidgetHeader
         title="Activity Feed"
         subtitle={

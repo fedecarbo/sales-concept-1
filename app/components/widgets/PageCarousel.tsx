@@ -1,26 +1,21 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, PencilIcon, CheckIcon } from "@heroicons/react/20/solid";
-import { WidgetGrid } from "./WidgetGrid";
+import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, PencilIcon, CheckIcon, TrashIcon } from "@heroicons/react/20/solid";
 import { Layout } from "react-grid-layout";
+import { WidgetGrid } from "./WidgetGrid";
+import { Page, WidgetInstance, WidgetConnection } from "@/app/types";
 
-export interface Page {
-  id: string;
-  name: string;
-  layout: Layout[];
-}
+// Re-export Page type for convenience
+export type { Page } from "@/app/types";
 
 export const defaultPages: Page[] = [
   {
     id: "page-1",
     name: "Overview",
-    layout: [
-      { i: "dashboard", x: 0, y: 0, w: 6, h: 5, minW: 2, minH: 2 },
-      { i: "analytics", x: 6, y: 0, w: 6, h: 2, minW: 2, minH: 2 },
-      { i: "stats", x: 6, y: 2, w: 3, h: 3, minW: 2, minH: 2 },
-      { i: "activity", x: 9, y: 2, w: 3, h: 3, minW: 2, minH: 2 },
-    ],
+    layout: [],
+    widgets: [],
+    connections: [],
   },
 ];
 
@@ -31,6 +26,7 @@ interface PageCarouselNavProps {
   onPageChange: (index: number) => void;
   onAddPage?: () => void;
   onRenamePage?: (index: number, newName: string) => void;
+  onRemovePage?: (index: number) => void;
 }
 
 export function PageCarouselNav({
@@ -39,6 +35,7 @@ export function PageCarouselNav({
   onPageChange,
   onAddPage,
   onRenamePage,
+  onRemovePage,
 }: PageCarouselNavProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState("");
@@ -179,6 +176,20 @@ export function PageCarouselNav({
           New
         </span>
       </button>
+
+      {/* Remove page button - only enabled when multiple pages */}
+      <button
+        onClick={() => onRemovePage?.(currentPage)}
+        disabled={pages.length <= 1}
+        className={`group flex items-center gap-1 rounded-full px-2 py-1 transition-all duration-200 ${
+          pages.length > 1
+            ? "text-stone-500 hover:bg-red-50 hover:text-red-600 dark:text-stone-400 dark:hover:bg-red-950 dark:hover:text-red-400"
+            : "text-stone-300 cursor-not-allowed dark:text-stone-700"
+        }`}
+        aria-label="Remove current page"
+      >
+        <TrashIcon className="h-4 w-4" />
+      </button>
     </div>
   );
 }
@@ -188,10 +199,24 @@ interface PageCarouselProps {
   pages: Page[];
   currentPage: number;
   onPageChange: (index: number) => void;
+  onUpdatePage?: (
+    pageIndex: number,
+    updates: {
+      widgets?: WidgetInstance[];
+      layout?: Layout[];
+      connections?: WidgetConnection[];
+    }
+  ) => void;
   className?: string;
 }
 
-export function PageCarousel({ pages, currentPage, onPageChange, className = "" }: PageCarouselProps) {
+export function PageCarousel({
+  pages,
+  currentPage,
+  onPageChange,
+  onUpdatePage,
+  className = "",
+}: PageCarouselProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const isProgrammaticScroll = useRef(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -214,7 +239,6 @@ export function PageCarousel({ pages, currentPage, onPageChange, className = "" 
       const scrollLeft = containerRef.current.scrollLeft;
       const newPage = Math.round(scrollLeft / pageWidth);
 
-      // Only update if it's a user-initiated scroll (not programmatic)
       if (!isProgrammaticScroll.current && newPage !== lastPageRef.current && newPage >= 0 && newPage < pages.length) {
         lastPageRef.current = newPage;
         onPageChange(newPage);
@@ -224,14 +248,12 @@ export function PageCarousel({ pages, currentPage, onPageChange, className = "" 
   }, [pages.length, onPageChange]);
 
   const handleScroll = useCallback(() => {
-    // Debounce scroll end detection
     if (scrollTimeoutRef.current) {
       clearTimeout(scrollTimeoutRef.current);
     }
     scrollTimeoutRef.current = setTimeout(handleScrollEnd, 100);
   }, [handleScrollEnd]);
 
-  // Sync scroll position when currentPage changes
   useEffect(() => {
     if (currentPage !== lastPageRef.current) {
       lastPageRef.current = currentPage;
@@ -239,14 +261,16 @@ export function PageCarousel({ pages, currentPage, onPageChange, className = "" 
     }
   }, [currentPage, scrollToPage]);
 
-  // Initial scroll on mount
   useEffect(() => {
     scrollToPage(currentPage, true);
   }, []);
 
-  // Handle keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't handle keyboard if user is typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
       if (e.key === "ArrowLeft" && currentPage > 0) {
         onPageChange(currentPage - 1);
       } else if (e.key === "ArrowRight" && currentPage < pages.length - 1) {
@@ -257,6 +281,16 @@ export function PageCarousel({ pages, currentPage, onPageChange, className = "" 
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [currentPage, pages.length, onPageChange]);
 
+  const handleApplyTemplate = useCallback(
+    (pageIndex: number) =>
+      (widgets: WidgetInstance[], layout: Layout[], connections: WidgetConnection[]) => {
+        if (onUpdatePage) {
+          onUpdatePage(pageIndex, { widgets, layout, connections });
+        }
+      },
+    [onUpdatePage]
+  );
+
   return (
     <div
       ref={containerRef}
@@ -264,14 +298,17 @@ export function PageCarousel({ pages, currentPage, onPageChange, className = "" 
       className={`flex h-full min-h-0 snap-x snap-mandatory overflow-x-auto scrollbar-hide ${className}`}
       style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
     >
-      {pages.map((page) => (
+      {pages.map((page, index) => (
         <div
           key={page.id}
           className="h-full w-full flex-shrink-0 snap-center"
         >
           <WidgetGrid
             layout={page.layout}
+            widgets={page.widgets}
+            connections={page.connections}
             pageId={page.id}
+            onApplyTemplate={handleApplyTemplate(index)}
           />
         </div>
       ))}

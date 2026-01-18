@@ -19,6 +19,7 @@ import { PillButton, CircleButton } from "../../ui";
 interface ContextViewerProps {
   widgetId: string;
   stepNumber?: number;
+  animationDelay?: number;
 }
 
 const interactionIcons: Record<string, typeof EnvelopeIcon> = {
@@ -44,13 +45,13 @@ const stageColors: Record<string, string> = {
   "closed-lost": "bg-red-100 text-red-700",
 };
 
-export function ContextViewer({ widgetId, stepNumber }: ContextViewerProps) {
+export function ContextViewer({ widgetId, stepNumber, animationDelay }: ContextViewerProps) {
   const { state } = useWidget();
   const { clientContext } = state;
 
   if (!clientContext) {
     return (
-      <WidgetCard className="h-full" stepNumber={stepNumber}>
+      <WidgetCard className="h-full" stepNumber={stepNumber} animationDelay={animationDelay}>
         <WidgetHeader title="Client Context" subtitle="Select a client" />
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="text-center">
@@ -80,7 +81,7 @@ export function ContextViewer({ widgetId, stepNumber }: ContextViewerProps) {
   const { client, recentInteractions, deals, notes } = clientContext;
 
   return (
-    <WidgetCard className="h-full" stepNumber={stepNumber}>
+    <WidgetCard className="h-full" stepNumber={stepNumber} animationDelay={animationDelay}>
       <WidgetHeader
         title={client.name}
         subtitle={`${client.role} at ${client.company}`}

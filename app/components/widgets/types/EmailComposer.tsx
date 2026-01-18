@@ -1,17 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { SparklesIcon, ArrowPathIcon } from "@heroicons/react/20/solid";
+import { SparklesIcon, ArrowPathIcon, CheckIcon, TrashIcon } from "@heroicons/react/20/solid";
 import { useWidget } from "@/app/context/WidgetContext";
 import { WidgetCard } from "../WidgetCard";
 import { WidgetHeader } from "../WidgetHeader";
 import { WidgetFooter } from "../WidgetFooter";
 import { PillButton, CircleButton } from "../../ui";
-import { TrashIcon } from "@heroicons/react/20/solid";
 
 interface EmailComposerProps {
   widgetId: string;
   stepNumber?: number;
+  animationDelay?: number;
 }
 
 const aiSuggestions = [
@@ -42,7 +42,7 @@ Would you be available for a 15-minute call this week to discuss next steps? I'm
 Looking forward to hearing from you.`,
 };
 
-export function EmailComposer({ widgetId, stepNumber }: EmailComposerProps) {
+export function EmailComposer({ widgetId, stepNumber, animationDelay }: EmailComposerProps) {
   const { state, actions } = useWidget();
   const { selectedClient, clientContext, emailDraft } = state;
   const [isGenerating, setIsGenerating] = useState(false);
@@ -77,7 +77,7 @@ export function EmailComposer({ widgetId, stepNumber }: EmailComposerProps) {
 
   if (!selectedClient || !emailDraft) {
     return (
-      <WidgetCard className="h-full" stepNumber={stepNumber}>
+      <WidgetCard className="h-full" stepNumber={stepNumber} animationDelay={animationDelay}>
         <WidgetHeader title="Email Composer" subtitle="AI-assisted drafting" />
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="text-center">
@@ -105,7 +105,7 @@ export function EmailComposer({ widgetId, stepNumber }: EmailComposerProps) {
   }
 
   return (
-    <WidgetCard className="h-full" stepNumber={stepNumber}>
+    <WidgetCard className="h-full" stepNumber={stepNumber} animationDelay={animationDelay}>
       <WidgetHeader
         title="Email Composer"
         subtitle={emailDraft.status === "sent" ? "Email sent" : "Draft"}
@@ -176,9 +176,7 @@ export function EmailComposer({ widgetId, stepNumber }: EmailComposerProps) {
               <div className="h-full rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="h-6 w-6 rounded-full bg-green-500 flex items-center justify-center">
-                    <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
+                    <CheckIcon className="h-4 w-4 text-white" />
                   </div>
                   <span className="text-sm font-medium text-green-700 dark:text-green-300">
                     Email sent successfully
