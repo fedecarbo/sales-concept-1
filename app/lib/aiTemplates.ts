@@ -1,5 +1,4 @@
-import { Layout } from "react-grid-layout";
-import { WidgetInstance, WidgetConnection, Page } from "@/app/types";
+import { WidgetInstance, WidgetConnection, Page, LayoutItem } from "@/app/types";
 
 export interface PageTemplate {
   id: string;
@@ -7,7 +6,7 @@ export interface PageTemplate {
   description: string;
   keywords: string[];
   widgets: WidgetInstance[];
-  layout: Layout[];
+  layout: LayoutItem[];
   connections: WidgetConnection[];
 }
 

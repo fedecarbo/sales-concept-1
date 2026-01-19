@@ -15,9 +15,10 @@ interface EmailSenderProps {
   widgetId: string;
   stepNumber?: number;
   animationDelay?: number;
+  isDragging?: boolean;
 }
 
-export function EmailSender({ widgetId, stepNumber, animationDelay }: EmailSenderProps) {
+export function EmailSender({ widgetId, stepNumber, animationDelay, isDragging }: EmailSenderProps) {
   const { state, actions } = useWidget();
   const { emailDraft } = state;
   const [isSending, setIsSending] = useState(false);
@@ -34,7 +35,7 @@ export function EmailSender({ widgetId, stepNumber, animationDelay }: EmailSende
 
   if (!emailDraft) {
     return (
-      <WidgetCard className="h-full" stepNumber={stepNumber} animationDelay={animationDelay}>
+      <WidgetCard className="h-full" stepNumber={stepNumber} animationDelay={animationDelay} isDragging={isDragging}>
         <WidgetHeader title="Send Email" subtitle="Ready to send" />
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="text-center">
@@ -60,7 +61,7 @@ export function EmailSender({ widgetId, stepNumber, animationDelay }: EmailSende
   const isSent = emailDraft.status === "sent";
 
   return (
-    <WidgetCard className="h-full" stepNumber={stepNumber} animationDelay={animationDelay}>
+    <WidgetCard className="h-full" stepNumber={stepNumber} animationDelay={animationDelay} isDragging={isDragging}>
       <WidgetHeader
         title="Send Email"
         subtitle={

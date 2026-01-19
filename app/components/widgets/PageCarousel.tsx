@@ -2,9 +2,8 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, PencilIcon, CheckIcon, TrashIcon } from "@heroicons/react/20/solid";
-import { Layout } from "react-grid-layout";
 import { WidgetGrid } from "./WidgetGrid";
-import { Page, WidgetInstance, WidgetConnection, WidgetType } from "@/app/types";
+import { Page, WidgetInstance, WidgetConnection, WidgetType, LayoutItem } from "@/app/types";
 
 // Re-export Page type for convenience
 export type { Page } from "@/app/types";
@@ -203,7 +202,7 @@ interface PageCarouselProps {
     pageIndex: number,
     updates: {
       widgets?: WidgetInstance[];
-      layout?: Layout[];
+      layout?: LayoutItem[];
       connections?: WidgetConnection[];
     }
   ) => void;
@@ -285,7 +284,7 @@ export function PageCarousel({
 
   const handleApplyTemplate = useCallback(
     (pageIndex: number) =>
-      (widgets: WidgetInstance[], layout: Layout[], connections: WidgetConnection[]) => {
+      (widgets: WidgetInstance[], layout: LayoutItem[], connections: WidgetConnection[]) => {
         if (onUpdatePage) {
           onUpdatePage(pageIndex, { widgets, layout, connections });
         }
@@ -315,7 +314,7 @@ export function PageCarousel({
   );
 
   const handleLayoutChange = useCallback(
-    (pageIndex: number) => (layout: Layout[]) => {
+    (pageIndex: number) => (layout: LayoutItem[]) => {
       if (onUpdatePage) {
         onUpdatePage(pageIndex, { layout });
       }
@@ -333,7 +332,7 @@ export function PageCarousel({
       {pages.map((page, index) => (
         <div
           key={page.id}
-          className="h-full w-full flex-shrink-0 snap-center"
+          className="h-full w-full flex-shrink-0 snap-center pt-3 px-3"
         >
           <WidgetGrid
             layout={page.layout}

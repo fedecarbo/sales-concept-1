@@ -9,13 +9,14 @@ interface AICanvasProps {
   widgetId: string;
   stepNumber?: number;
   animationDelay?: number;
+  isDragging?: boolean;
 }
 
-export function AICanvas({ widgetId, stepNumber, animationDelay }: AICanvasProps) {
+export function AICanvas({ widgetId, stepNumber, animationDelay, isDragging }: AICanvasProps) {
   const [prompt, setPrompt] = useState("");
 
   return (
-    <WidgetCard className="h-full" stepNumber={stepNumber} animationDelay={animationDelay}>
+    <WidgetCard className="h-full" stepNumber={stepNumber} animationDelay={animationDelay} isDragging={isDragging}>
       <WidgetHeader
         title="AI Canvas"
         subtitle="Ask AI to display anything"

@@ -12,6 +12,7 @@ interface EmailComposerProps {
   widgetId: string;
   stepNumber?: number;
   animationDelay?: number;
+  isDragging?: boolean;
 }
 
 const aiSuggestions = [
@@ -42,7 +43,7 @@ Would you be available for a 15-minute call this week to discuss next steps? I'm
 Looking forward to hearing from you.`,
 };
 
-export function EmailComposer({ widgetId, stepNumber, animationDelay }: EmailComposerProps) {
+export function EmailComposer({ widgetId, stepNumber, animationDelay, isDragging }: EmailComposerProps) {
   const { state, actions } = useWidget();
   const { selectedClient, clientContext, emailDraft } = state;
   const [isGenerating, setIsGenerating] = useState(false);
@@ -77,7 +78,7 @@ export function EmailComposer({ widgetId, stepNumber, animationDelay }: EmailCom
 
   if (!selectedClient || !emailDraft) {
     return (
-      <WidgetCard className="h-full" stepNumber={stepNumber} animationDelay={animationDelay}>
+      <WidgetCard className="h-full" stepNumber={stepNumber} animationDelay={animationDelay} isDragging={isDragging}>
         <WidgetHeader title="Email Composer" subtitle="AI-assisted drafting" />
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="text-center">
@@ -105,7 +106,7 @@ export function EmailComposer({ widgetId, stepNumber, animationDelay }: EmailCom
   }
 
   return (
-    <WidgetCard className="h-full" stepNumber={stepNumber} animationDelay={animationDelay}>
+    <WidgetCard className="h-full" stepNumber={stepNumber} animationDelay={animationDelay} isDragging={isDragging}>
       <WidgetHeader
         title="Email Composer"
         subtitle={emailDraft.status === "sent" ? "Email sent" : "Draft"}

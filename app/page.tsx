@@ -1,12 +1,11 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Layout } from "react-grid-layout";
 import { MagnifyingGlassIcon, BellIcon, Cog6ToothIcon, SparklesIcon, PlusIcon } from "@heroicons/react/20/solid";
 import { PageCarousel, PageCarouselNav, defaultPages } from "./components/widgets";
 import { WidgetProvider } from "./context/WidgetContext";
 import { CommandPalette } from "./components/CommandPalette";
-import { Page, WidgetInstance, WidgetConnection, WidgetType } from "./types";
+import { Page, WidgetInstance, WidgetConnection, WidgetType, LayoutItem } from "./types";
 import { pageTemplates, applyTemplate, PageTemplate } from "./lib/aiTemplates";
 import { widgetRegistry } from "./lib/widgetRegistry";
 import { personas, fcPersona } from "./data/personas";
@@ -85,7 +84,7 @@ export default function Home() {
       pageIndex: number,
       updates: {
         widgets?: WidgetInstance[];
-        layout?: Layout[];
+        layout?: LayoutItem[];
         connections?: WidgetConnection[];
       }
     ) => {
@@ -124,7 +123,7 @@ export default function Home() {
   }, [currentPage, pages]);
 
   // Find an empty spot on the grid for a new widget
-  const findEmptySpot = useCallback((layout: Layout[], w: number, h: number): { x: number; y: number } => {
+  const findEmptySpot = useCallback((layout: LayoutItem[], w: number, h: number): { x: number; y: number } => {
     const cols = 12;
     const rows = 6;
 
@@ -174,7 +173,7 @@ export default function Home() {
     // Find an empty spot for the new widget
     const { x, y } = findEmptySpot(currentPageData.layout, widgetDef.defaultSize.w, widgetDef.defaultSize.h);
 
-    const newLayoutItem: Layout = {
+    const newLayoutItem: LayoutItem = {
       i: newWidgetId,
       x,
       y,
@@ -207,7 +206,7 @@ export default function Home() {
       type: widgetType,
     };
 
-    const newLayoutItem: Layout = {
+    const newLayoutItem: LayoutItem = {
       i: newWidgetId,
       x,
       y,

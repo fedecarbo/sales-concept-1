@@ -169,8 +169,23 @@ body {
 
 .react-grid-item.react-draggable-dragging {
   transition: none;
-  z-index: 3;
+  z-index: 100;
   will-change: transform;
+}
+
+/* Enhanced drag preview - lift effect with shadow */
+.react-grid-item.react-draggable-dragging > * {
+  box-shadow:
+    0 0 0 2px oklch(0.62 0.075 242 / 0.3),
+    0 12px 40px -8px oklch(0 0 0 / 0.25),
+    0 4px 12px oklch(0 0 0 / 0.1);
+  transform: scale(1.02);
+  transition: box-shadow 150ms ease, transform 150ms ease;
+}
+
+/* Smooth return after drop */
+.react-grid-item:not(.react-draggable-dragging) > * {
+  transition: box-shadow 200ms ease, transform 200ms ease;
 }
 
 .react-grid-item.dropping {
@@ -180,10 +195,13 @@ body {
 }
 
 .react-grid-item.react-grid-placeholder {
-  background: oklch(0.62 0.075 242 / 0.15);
-  border: 2px dashed oklch(0.62 0.075 242);
-  border-radius: 0.5rem;
-  transition-duration: 100ms;
+  background: oklch(0.62 0.075 242 / 0.08);
+  border: 2px dashed oklch(0.62 0.075 242 / 0.6);
+  border-radius: 1rem;
+  box-shadow:
+    0 0 0 4px oklch(0.62 0.075 242 / 0.1),
+    0 8px 32px oklch(0 0 0 / 0.1);
+  transition-duration: 80ms;
   z-index: 2;
   user-select: none;
 }

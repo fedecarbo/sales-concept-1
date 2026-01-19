@@ -1,27 +1,28 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import GridLayout, { Layout } from "react-grid-layout";
+import GridLayout, { Layout, LayoutItem } from "react-grid-layout/legacy";
 import { SparklesIcon, XMarkIcon } from "@heroicons/react/20/solid";
 import { WidgetInstance, WidgetConnection, WidgetType } from "@/app/types";
 import { WidgetRenderer } from "./WidgetRenderer";
 import { pageTemplates } from "@/app/lib/aiTemplates";
 import { calculateWorkflowSteps } from "@/app/lib/workflowUtils";
+import { SnapGuides, SnapGuide } from "./SnapGuides";
 
 interface WidgetGridProps {
   className?: string;
-  layout?: Layout[];
+  layout?: LayoutItem[];
   widgets?: WidgetInstance[];
   connections?: WidgetConnection[];
   pageId?: string;
   onApplyTemplate?: (
     widgets: WidgetInstance[],
-    layout: Layout[],
+    layout: LayoutItem[],
     connections: WidgetConnection[]
   ) => void;
   onRemoveWidget?: (widgetId: string) => void;
   onAddWidgetAtPosition?: (widgetType: WidgetType, x: number, y: number) => void;
-  onLayoutChange?: (layout: Layout[]) => void;
+  onLayoutChange?: (layout: LayoutItem[]) => void;
 }
 
 export function WidgetGrid({
@@ -37,15 +38,19 @@ export function WidgetGrid({
 }: WidgetGridProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 1200, height: 600 });
-  const [layout, setLayout] = useState<Layout[]>(propLayout || []);
+  const [layout, setLayout] = useState<LayoutItem[]>(propLayout || []);
   const [aiQuery, setAiQuery] = useState("");
   const [isThinking, setIsThinking] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Drag state for visual feedback
+  const [draggingItemId, setDraggingItemId] = useState<string | null>(null);
+  const [snapGuides, setSnapGuides] = useState<SnapGuide[]>([]);
+
   const cols = 12;
   const rows = 6;
-  const margin: [number, number] = [0, 0];
+  const margin: [number, number] = [12, 12];
 
   // Sync layout from props
   useEffect(() => {
@@ -75,12 +80,120 @@ export function WidgetGrid({
     };
   }, []);
 
-  const rowHeight = Math.floor(dimensions.height / rows);
+  // Account for margins: total = rows * rowHeight + (rows - 1) * margin
+  const rowHeight = Math.floor((dimensions.height - (rows - 1) * margin[1]) / rows);
+  const cellWidth = (dimensions.width - (cols - 1) * margin[0]) / cols;
 
-  const onLayoutChange = useCallback((newLayout: Layout[]) => {
-    setLayout(newLayout);
+  // Calculate snap guides when dragging
+  // Grid position to pixel: position * (cellSize + margin)
+  const gridToPixelX = useCallback((gridX: number) => gridX * (cellWidth + margin[0]), [cellWidth, margin]);
+  const gridToPixelY = useCallback((gridY: number) => gridY * (rowHeight + margin[1]), [rowHeight, margin]);
+
+  const calculateSnapGuides = useCallback(
+    (draggingItem: LayoutItem, currentLayout: LayoutItem[]): SnapGuide[] => {
+      const guides: SnapGuide[] = [];
+      const threshold = 0.5; // Grid units threshold for snapping
+
+      const otherItems = currentLayout.filter((item) => item.i !== draggingItem.i);
+
+      // Calculate dragging item edges
+      const dragLeft = draggingItem.x;
+      const dragRight = draggingItem.x + draggingItem.w;
+      const dragTop = draggingItem.y;
+      const dragBottom = draggingItem.y + draggingItem.h;
+      const dragCenterX = draggingItem.x + draggingItem.w / 2;
+      const dragCenterY = draggingItem.y + draggingItem.h / 2;
+
+      for (const item of otherItems) {
+        const itemLeft = item.x;
+        const itemRight = item.x + item.w;
+        const itemTop = item.y;
+        const itemBottom = item.y + item.h;
+        const itemCenterX = item.x + item.w / 2;
+        const itemCenterY = item.y + item.h / 2;
+
+        // Vertical guides (left/right edge alignment)
+        if (Math.abs(dragLeft - itemLeft) < threshold) {
+          guides.push({ type: "vertical", position: gridToPixelX(itemLeft), alignedWith: [item.i] });
+        }
+        if (Math.abs(dragRight - itemRight) < threshold) {
+          guides.push({ type: "vertical", position: gridToPixelX(itemRight), alignedWith: [item.i] });
+        }
+        if (Math.abs(dragLeft - itemRight) < threshold) {
+          guides.push({ type: "vertical", position: gridToPixelX(itemRight), alignedWith: [item.i] });
+        }
+        if (Math.abs(dragRight - itemLeft) < threshold) {
+          guides.push({ type: "vertical", position: gridToPixelX(itemLeft), alignedWith: [item.i] });
+        }
+        // Center X alignment
+        if (Math.abs(dragCenterX - itemCenterX) < threshold) {
+          guides.push({ type: "vertical", position: gridToPixelX(itemCenterX), alignedWith: [item.i] });
+        }
+
+        // Horizontal guides (top/bottom edge alignment)
+        if (Math.abs(dragTop - itemTop) < threshold) {
+          guides.push({ type: "horizontal", position: gridToPixelY(itemTop), alignedWith: [item.i] });
+        }
+        if (Math.abs(dragBottom - itemBottom) < threshold) {
+          guides.push({ type: "horizontal", position: gridToPixelY(itemBottom), alignedWith: [item.i] });
+        }
+        if (Math.abs(dragTop - itemBottom) < threshold) {
+          guides.push({ type: "horizontal", position: gridToPixelY(itemBottom), alignedWith: [item.i] });
+        }
+        if (Math.abs(dragBottom - itemTop) < threshold) {
+          guides.push({ type: "horizontal", position: gridToPixelY(itemTop), alignedWith: [item.i] });
+        }
+        // Center Y alignment
+        if (Math.abs(dragCenterY - itemCenterY) < threshold) {
+          guides.push({ type: "horizontal", position: gridToPixelY(itemCenterY), alignedWith: [item.i] });
+        }
+      }
+
+      // Deduplicate guides by position (within 2px)
+      const uniqueGuides: SnapGuide[] = [];
+      for (const guide of guides) {
+        const exists = uniqueGuides.some(
+          (g) => g.type === guide.type && Math.abs(g.position - guide.position) < 2
+        );
+        if (!exists) {
+          uniqueGuides.push(guide);
+        }
+      }
+
+      return uniqueGuides;
+    },
+    [gridToPixelX, gridToPixelY]
+  );
+
+  // Drag event handlers
+  const handleDragStart = useCallback(
+    (_layout: Layout, _oldItem: LayoutItem | null, newItem: LayoutItem | null) => {
+      if (newItem) setDraggingItemId(newItem.i);
+    },
+    []
+  );
+
+  const handleDrag = useCallback(
+    (currentLayout: Layout, _oldItem: LayoutItem | null, newItem: LayoutItem | null) => {
+      if (newItem) {
+        const guides = calculateSnapGuides(newItem, [...currentLayout]);
+        setSnapGuides(guides);
+      }
+    },
+    [calculateSnapGuides]
+  );
+
+  const handleDragStop = useCallback(() => {
+    setDraggingItemId(null);
+    setSnapGuides([]);
+  }, []);
+
+  const onLayoutChange = useCallback((newLayout: Layout) => {
+    // Convert readonly Layout to mutable array for state
+    const mutableLayout = [...newLayout];
+    setLayout(mutableLayout);
     // Propagate layout changes to parent
-    onLayoutChangeProp?.(newLayout);
+    onLayoutChangeProp?.(mutableLayout);
   }, [onLayoutChangeProp]);
 
   // Get widget type by layout item ID
@@ -181,7 +294,7 @@ export function WidgetGrid({
 
   // Generate grid cell layout for background
   const gridCellLayout = useMemo(() => {
-    const cells: Layout[] = [];
+    const cells: LayoutItem[] = [];
     for (let row = 0; row < rows; row++) {
       for (let col = 0; col < cols; col++) {
         cells.push({
@@ -208,7 +321,7 @@ export function WidgetGrid({
   return (
     <div ref={containerRef} className={`relative h-full w-full ${className}`}>
       {/* Background grid cells */}
-      <div className="pointer-events-none absolute top-0 left-0 w-full">
+      <div className="pointer-events-none absolute inset-0">
         <GridLayout
           className="layout"
           layout={gridCellLayout}
@@ -224,7 +337,7 @@ export function WidgetGrid({
           {gridCellLayout.map((cell) => (
             <div
               key={cell.i}
-              className="rounded-2xl border border-stone-200/50 dark:border-stone-700/50"
+              className="rounded-xl border border-stone-200/40 dark:border-stone-700/40"
             />
           ))}
         </GridLayout>
@@ -322,30 +435,34 @@ export function WidgetGrid({
         <GridLayout
           className="layout"
           style={{ minHeight: dimensions.height, height: "100%" }}
-        layout={layout}
-        cols={cols}
-        rowHeight={rowHeight}
-        width={dimensions.width}
-        margin={margin}
-        containerPadding={[0, 0]}
-        onLayoutChange={onLayoutChange}
-        draggableHandle=".widget-drag-handle"
-        resizeHandles={["se", "sw", "ne", "nw", "e", "w", "n", "s"]}
-        useCSSTransforms={true}
-        compactType={null}
-        preventCollision={true}
-        isBounded={true}
-        maxRows={rows}
-        autoSize={false}
-        isDroppable={true}
-        droppingItem={{ i: "__dropping-elem__", w: 4, h: 4 }}
-        onDrop={(_layout, layoutItem, event) => {
-          const widgetType = (event as DragEvent).dataTransfer?.getData("widgetType") as WidgetType;
-          if (widgetType && onAddWidgetAtPosition) {
-            onAddWidgetAtPosition(widgetType, layoutItem.x, layoutItem.y);
-          }
-        }}
-      >
+          layout={layout}
+          cols={cols}
+          rowHeight={rowHeight}
+          width={dimensions.width}
+          margin={margin}
+          containerPadding={[0, 0]}
+          onLayoutChange={onLayoutChange}
+          onDragStart={handleDragStart}
+          onDrag={handleDrag}
+          onDragStop={handleDragStop}
+          draggableHandle=".widget-drag-handle"
+          resizeHandles={["se"]}
+          useCSSTransforms={true}
+          compactType={null}
+          preventCollision={true}
+          isBounded={true}
+          maxRows={rows}
+          autoSize={false}
+          isDroppable={true}
+          droppingItem={{ i: "__dropping-elem__", x: 0, y: 0, w: 4, h: 4 }}
+          onDrop={(_layout, layoutItem, event) => {
+            if (!layoutItem) return;
+            const widgetType = (event as DragEvent).dataTransfer?.getData("widgetType") as WidgetType;
+            if (widgetType && onAddWidgetAtPosition) {
+              onAddWidgetAtPosition(widgetType, layoutItem.x, layoutItem.y);
+            }
+          }}
+        >
           {layout.map((item) => {
             const widgetType = getWidgetType(item.i);
             const stepNumber = workflowSteps.get(item.i);
@@ -361,6 +478,7 @@ export function WidgetGrid({
                     type={widgetType}
                     stepNumber={stepNumber}
                     animationDelay={animationDelay}
+                    isDragging={draggingItemId === item.i}
                   />
                 ) : (
                   <div className="h-full rounded-2xl bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
@@ -384,6 +502,13 @@ export function WidgetGrid({
             );
           })}
         </GridLayout>
+
+        {/* Snap guides overlay */}
+        <SnapGuides
+          guides={snapGuides}
+          width={dimensions.width}
+          height={dimensions.height}
+        />
       </div>
     </div>
   );

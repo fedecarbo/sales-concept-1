@@ -12,9 +12,10 @@ interface ClientSelectorProps {
   widgetId: string;
   stepNumber?: number;
   animationDelay?: number;
+  isDragging?: boolean;
 }
 
-export function ClientSelector({ widgetId, stepNumber, animationDelay }: ClientSelectorProps) {
+export function ClientSelector({ widgetId, stepNumber, animationDelay, isDragging }: ClientSelectorProps) {
   const { state, actions, clients } = useWidget();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -30,7 +31,7 @@ export function ClientSelector({ widgetId, stepNumber, animationDelay }: ClientS
   }, [clients, searchQuery]);
 
   return (
-    <WidgetCard className="h-full" stepNumber={stepNumber} animationDelay={animationDelay}>
+    <WidgetCard className="h-full" stepNumber={stepNumber} animationDelay={animationDelay} isDragging={isDragging}>
       <WidgetHeader
         title="Clients"
         subtitle={`${clients.length} contacts`}

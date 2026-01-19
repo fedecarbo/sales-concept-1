@@ -24,6 +24,7 @@ interface ActivityFeedProps {
   widgetId: string;
   stepNumber?: number;
   animationDelay?: number;
+  isDragging?: boolean;
 }
 
 const interactionIcons: Record<string, typeof EnvelopeIcon> = {
@@ -63,7 +64,7 @@ function formatDate(dateStr: string): string {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-export function ActivityFeed({ widgetId, stepNumber, animationDelay }: ActivityFeedProps) {
+export function ActivityFeed({ widgetId, stepNumber, animationDelay, isDragging }: ActivityFeedProps) {
   const { state } = useWidget();
   const { selectedClient, clientContext } = state;
 
@@ -80,7 +81,7 @@ export function ActivityFeed({ widgetId, stepNumber, animationDelay }: ActivityF
     : null;
 
   return (
-    <WidgetCard className="h-full" stepNumber={stepNumber} animationDelay={animationDelay}>
+    <WidgetCard className="h-full" stepNumber={stepNumber} animationDelay={animationDelay} isDragging={isDragging}>
       <WidgetHeader
         title="Activity Feed"
         subtitle={

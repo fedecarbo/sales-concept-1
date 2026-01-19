@@ -1,4 +1,7 @@
-import { Layout } from "react-grid-layout";
+// Re-export types from react-grid-layout/legacy for compatibility
+import type { LayoutItem as RGLLayoutItem, Layout as RGLLayout } from "react-grid-layout/legacy";
+export type LayoutItem = RGLLayoutItem;
+export type Layout = RGLLayout;
 
 export type WidgetType =
   | "client-selector"
@@ -37,7 +40,7 @@ export interface WidgetConnection {
 export interface Page {
   id: string;
   name: string;
-  layout: Layout[];
+  layout: LayoutItem[];
   widgets: WidgetInstance[];
   connections: WidgetConnection[];
 }

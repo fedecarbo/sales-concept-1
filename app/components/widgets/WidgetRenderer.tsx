@@ -13,22 +13,25 @@ interface WidgetRendererProps {
   type: WidgetType;
   stepNumber?: number;
   animationDelay?: number;
+  isDragging?: boolean;
 }
 
-export function WidgetRenderer({ widgetId, type, stepNumber, animationDelay }: WidgetRendererProps) {
+export function WidgetRenderer({ widgetId, type, stepNumber, animationDelay, isDragging }: WidgetRendererProps) {
+  const commonProps = { widgetId, stepNumber, animationDelay, isDragging };
+
   switch (type) {
     case "client-selector":
-      return <ClientSelector widgetId={widgetId} stepNumber={stepNumber} animationDelay={animationDelay} />;
+      return <ClientSelector {...commonProps} />;
     case "context-viewer":
-      return <ContextViewer widgetId={widgetId} stepNumber={stepNumber} animationDelay={animationDelay} />;
+      return <ContextViewer {...commonProps} />;
     case "email-composer":
-      return <EmailComposer widgetId={widgetId} stepNumber={stepNumber} animationDelay={animationDelay} />;
+      return <EmailComposer {...commonProps} />;
     case "email-sender":
-      return <EmailSender widgetId={widgetId} stepNumber={stepNumber} animationDelay={animationDelay} />;
+      return <EmailSender {...commonProps} />;
     case "activity-feed":
-      return <ActivityFeed widgetId={widgetId} stepNumber={stepNumber} animationDelay={animationDelay} />;
+      return <ActivityFeed {...commonProps} />;
     case "ai-canvas":
-      return <AICanvas widgetId={widgetId} stepNumber={stepNumber} animationDelay={animationDelay} />;
+      return <AICanvas {...commonProps} />;
     default:
       return (
         <div className="flex h-full items-center justify-center text-stone-400">

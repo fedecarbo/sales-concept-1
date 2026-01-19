@@ -53,7 +53,7 @@ export function CircleButton({
         disabled ? "opacity-50 cursor-not-allowed" : ""
       } ${className}`}
     >
-      <Icon aria-hidden="true" className={iconSizes[size]} />
+      <Icon aria-hidden={true} className={iconSizes[size]} />
     </button>
   );
 }

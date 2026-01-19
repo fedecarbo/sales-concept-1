@@ -1,12 +1,11 @@
 "use client";
 
 import { useMemo } from "react";
-import { Layout } from "react-grid-layout";
-import { DataPort, WidgetConnection } from "@/app/types";
+import { DataPort, WidgetConnection, LayoutItem } from "@/app/types";
 
 interface ConnectionLineProps {
   connection: WidgetConnection;
-  layout: Layout[];
+  layout: LayoutItem[];
   containerWidth: number;
   containerHeight: number;
   cols: number;
@@ -143,7 +142,7 @@ export function ConnectionLine({
 
 interface ConnectionLayerProps {
   connections: WidgetConnection[];
-  layout: Layout[];
+  layout: LayoutItem[];
   containerWidth: number;
   containerHeight: number;
   cols: number;

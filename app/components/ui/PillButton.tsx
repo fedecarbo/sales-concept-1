@@ -53,11 +53,11 @@ export function PillButton({
       } ${className}`}
     >
       {Icon && iconPosition === "left" && (
-        <Icon aria-hidden="true" className={iconSizes[size]} />
+        <Icon aria-hidden={true} className={iconSizes[size]} />
       )}
       {children}
       {Icon && iconPosition === "right" && (
-        <Icon aria-hidden="true" className={iconSizes[size]} />
+        <Icon aria-hidden={true} className={iconSizes[size]} />
       )}
     </button>
   );
