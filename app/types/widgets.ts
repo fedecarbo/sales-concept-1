@@ -41,3 +41,10 @@ export interface Page {
   widgets: WidgetInstance[];
   connections: WidgetConnection[];
 }
+
+export interface Persona {
+  id: string;
+  name: string;
+  initials: string;
+  pages: Page[];
+}

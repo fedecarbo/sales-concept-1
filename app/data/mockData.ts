@@ -58,6 +58,13 @@ const mockInteractions: Record<string, Interaction[]> = {
       sentiment: "positive",
     },
     {
+      id: "int-1a",
+      type: "linkedin",
+      date: "2025-01-13",
+      summary: "Connected on LinkedIn, liked her post about scaling engineering teams",
+      sentiment: "positive",
+    },
+    {
       id: "int-2",
       type: "call",
       date: "2025-01-10",
@@ -81,11 +88,25 @@ const mockInteractions: Record<string, Interaction[]> = {
       sentiment: "positive",
     },
     {
+      id: "int-4a",
+      type: "sales-navigator",
+      date: "2025-01-13",
+      summary: "InMail sent introducing our team - awaiting response",
+      sentiment: "neutral",
+    },
+    {
       id: "int-5",
       type: "email",
       date: "2025-01-12",
       summary: "Sent proposal for expanded license",
       sentiment: "neutral",
+    },
+    {
+      id: "int-5a",
+      type: "linkedin",
+      date: "2025-01-05",
+      summary: "Initial connection request accepted, brief intro exchange",
+      sentiment: "positive",
     },
   ],
   "client-3": [
@@ -94,6 +115,13 @@ const mockInteractions: Record<string, Interaction[]> = {
       type: "call",
       date: "2025-01-16",
       summary: "Initial discovery call - great fit",
+      sentiment: "positive",
+    },
+    {
+      id: "int-6a",
+      type: "sales-navigator",
+      date: "2025-01-14",
+      summary: "InMail cold outreach - mentioned David Kim referral",
       sentiment: "positive",
     },
     {
@@ -202,6 +230,44 @@ const mockNotes: Record<string, string[]> = {
     "Interested in automation features",
   ],
 };
+
+export interface ActivitySummary {
+  overview: string;
+  nextStep: string;
+  sentiment: "positive" | "neutral" | "negative";
+}
+
+const mockActivitySummaries: Record<string, ActivitySummary> = {
+  "client-1": {
+    overview: "Strong engagement across 4 touchpoints. Budget approved for Q1. Integration timeline discussed.",
+    nextStep: "Send contract proposal by end of week",
+    sentiment: "positive",
+  },
+  "client-2": {
+    overview: "Early-stage relationship. Competitor contract ending in March - timing opportunity.",
+    nextStep: "Follow up on InMail, schedule discovery call",
+    sentiment: "neutral",
+  },
+  "client-3": {
+    overview: "Warm intro via David Kim referral. Discovery call went well - fast decision-maker.",
+    nextStep: "Send case studies from similar founder-led companies",
+    sentiment: "positive",
+  },
+  "client-4": {
+    overview: "Existing customer, expansion opportunity. Technical deep-dive completed.",
+    nextStep: "Propose API tier upgrade based on usage patterns",
+    sentiment: "positive",
+  },
+  "client-5": {
+    overview: "New relationship, onboarding in progress. Interested in automation.",
+    nextStep: "Schedule training session on automation features",
+    sentiment: "neutral",
+  },
+};
+
+export function getActivitySummary(clientId: string): ActivitySummary | null {
+  return mockActivitySummaries[clientId] || null;
+}
 
 export function getClientContext(clientId: string): ClientContext | null {
   const client = mockClients.find((c) => c.id === clientId);

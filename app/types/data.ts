@@ -11,7 +11,7 @@ export interface Client {
 
 export interface Interaction {
   id: string;
-  type: "email" | "call" | "meeting" | "slack" | "note";
+  type: "email" | "call" | "meeting" | "slack" | "note" | "linkedin" | "sales-navigator";
   date: string;
   summary: string;
   sentiment?: "positive" | "neutral" | "negative";

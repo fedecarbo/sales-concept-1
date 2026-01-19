@@ -9,12 +9,16 @@ import { CommandPalette } from "./components/CommandPalette";
 import { Page, WidgetInstance, WidgetConnection, WidgetType } from "./types";
 import { pageTemplates, applyTemplate, PageTemplate } from "./lib/aiTemplates";
 import { widgetRegistry } from "./lib/widgetRegistry";
+import { personas, fcPersona } from "./data/personas";
+import { Persona } from "./types";
 
 export default function Home() {
-  const [pages, setPages] = useState<Page[]>(defaultPages);
+  const [currentPersona, setCurrentPersona] = useState<Persona>(fcPersona);
+  const [pages, setPages] = useState<Page[]>(currentPersona.pages);
   const [currentPage, setCurrentPage] = useState(0);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [paletteDefaultTab, setPaletteDefaultTab] = useState<"search" | "ai">("search");
+  const [personaMenuOpen, setPersonaMenuOpen] = useState(false);
 
   // Keyboard shortcut for command palette (Cmd+K)
   useEffect(() => {
@@ -27,6 +31,20 @@ export default function Home() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  // Close persona menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (personaMenuOpen) {
+        const target = e.target as HTMLElement;
+        if (!target.closest("[data-persona-menu]")) {
+          setPersonaMenuOpen(false);
+        }
+      }
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [personaMenuOpen]);
 
   const handleAddPage = useCallback(() => {
     const newPageNumber = pages.length + 1;
@@ -222,6 +240,13 @@ export default function Home() {
     setPaletteOpen(true);
   }, []);
 
+  const handleSwitchPersona = useCallback((persona: Persona) => {
+    setCurrentPersona(persona);
+    setPages(persona.pages);
+    setCurrentPage(0);
+    setPersonaMenuOpen(false);
+  }, []);
+
   return (
     <WidgetProvider>
       <div className="flex h-screen flex-col bg-stone-50 dark:bg-stone-950">
@@ -309,15 +334,40 @@ export default function Home() {
                   >
                     <Cog6ToothIcon className="size-4" aria-hidden="true" />
                   </button>
-                  <button
-                    type="button"
-                    className="rounded-full p-0.5"
-                    aria-label="User menu"
-                  >
-                    <span className="inline-flex size-7 items-center justify-center rounded-full bg-stone-900 dark:bg-stone-100">
-                      <span className="text-xs font-medium text-white dark:text-stone-900">FC</span>
-                    </span>
-                  </button>
+                  <div className="relative" data-persona-menu>
+                    <button
+                      type="button"
+                      onClick={() => setPersonaMenuOpen(!personaMenuOpen)}
+                      className="rounded-full p-0.5"
+                      aria-label="User menu"
+                    >
+                      <span className="inline-flex size-7 items-center justify-center rounded-full bg-stone-900 dark:bg-stone-100">
+                        <span className="text-xs font-medium text-white dark:text-stone-900">{currentPersona.initials}</span>
+                      </span>
+                    </button>
+                    {personaMenuOpen && (
+                      <div className="absolute right-0 top-full mt-2 w-48 rounded-lg bg-white shadow-lg ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700 z-50">
+                        <div className="p-1">
+                          {personas.map((persona) => (
+                            <button
+                              key={persona.id}
+                              onClick={() => handleSwitchPersona(persona)}
+                              className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors ${
+                                persona.id === currentPersona.id
+                                  ? "bg-stone-100 dark:bg-stone-800"
+                                  : "hover:bg-stone-50 dark:hover:bg-stone-800/50"
+                              }`}
+                            >
+                              <span className="inline-flex size-7 items-center justify-center rounded-full bg-stone-900 dark:bg-stone-100">
+                                <span className="text-xs font-medium text-white dark:text-stone-900">{persona.initials}</span>
+                              </span>
+                              <span className="font-medium text-stone-900 dark:text-white">{persona.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
