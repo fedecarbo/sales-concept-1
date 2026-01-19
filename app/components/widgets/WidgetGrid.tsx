@@ -50,7 +50,7 @@ export function WidgetGrid({
 
   const cols = 12;
   const rows = 6;
-  const margin: [number, number] = [12, 12];
+  const margin: [number, number] = [16, 16];
 
   // Sync layout from props
   useEffect(() => {

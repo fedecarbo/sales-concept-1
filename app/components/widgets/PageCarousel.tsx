@@ -332,7 +332,7 @@ export function PageCarousel({
       {pages.map((page, index) => (
         <div
           key={page.id}
-          className="h-full w-full flex-shrink-0 snap-center pt-3 px-3"
+          className="h-full w-full flex-shrink-0 snap-center pt-4 px-4"
         >
           <WidgetGrid
             layout={page.layout}
