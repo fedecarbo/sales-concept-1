@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { Layout } from "react-grid-layout";
-import { MagnifyingGlassIcon, BellIcon, Cog6ToothIcon, SparklesIcon } from "@heroicons/react/20/solid";
+import { MagnifyingGlassIcon, BellIcon, Cog6ToothIcon, SparklesIcon, PlusIcon } from "@heroicons/react/20/solid";
 import { PageCarousel, PageCarouselNav, defaultPages } from "./components/widgets";
 import { WidgetProvider } from "./context/WidgetContext";
 import { CommandPalette } from "./components/CommandPalette";
@@ -105,6 +105,44 @@ export default function Home() {
     );
   }, [currentPage, pages]);
 
+  // Find an empty spot on the grid for a new widget
+  const findEmptySpot = useCallback((layout: Layout[], w: number, h: number): { x: number; y: number } => {
+    const cols = 12;
+    const rows = 6;
+
+    // Create a grid to track occupied cells
+    const occupied: boolean[][] = Array(rows).fill(null).map(() => Array(cols).fill(false));
+
+    // Mark occupied cells
+    for (const item of layout) {
+      for (let row = item.y; row < Math.min(item.y + item.h, rows); row++) {
+        for (let col = item.x; col < Math.min(item.x + item.w, cols); col++) {
+          occupied[row][col] = true;
+        }
+      }
+    }
+
+    // Find first spot that fits the widget
+    for (let y = 0; y <= rows - h; y++) {
+      for (let x = 0; x <= cols - w; x++) {
+        let canFit = true;
+        for (let dy = 0; dy < h && canFit; dy++) {
+          for (let dx = 0; dx < w && canFit; dx++) {
+            if (occupied[y + dy][x + dx]) {
+              canFit = false;
+            }
+          }
+        }
+        if (canFit) {
+          return { x, y };
+        }
+      }
+    }
+
+    // No space found, return origin (will overlap)
+    return { x: 0, y: 0 };
+  }, []);
+
   const handleAddWidget = useCallback((widgetType: WidgetType) => {
     const currentPageData = pages[currentPage];
     const widgetDef = widgetRegistry[widgetType];
@@ -115,11 +153,46 @@ export default function Home() {
       type: widgetType,
     };
 
-    // Find a spot for the new widget (simple placement at origin)
+    // Find an empty spot for the new widget
+    const { x, y } = findEmptySpot(currentPageData.layout, widgetDef.defaultSize.w, widgetDef.defaultSize.h);
+
     const newLayoutItem: Layout = {
       i: newWidgetId,
-      x: 0,
-      y: 0,
+      x,
+      y,
+      w: widgetDef.defaultSize.w,
+      h: widgetDef.defaultSize.h,
+      minW: widgetDef.minSize.w,
+      minH: widgetDef.minSize.h,
+    };
+
+    setPages((prev) =>
+      prev.map((page, i) =>
+        i === currentPage
+          ? {
+              ...page,
+              widgets: [...page.widgets, newWidget],
+              layout: [...page.layout, newLayoutItem],
+            }
+          : page
+      )
+    );
+  }, [currentPage, pages, findEmptySpot]);
+
+  const handleAddWidgetAtPosition = useCallback((widgetType: WidgetType, x: number, y: number) => {
+    const currentPageData = pages[currentPage];
+    const widgetDef = widgetRegistry[widgetType];
+    const newWidgetId = `${currentPageData.id}-w${Date.now()}`;
+
+    const newWidget: WidgetInstance = {
+      id: newWidgetId,
+      type: widgetType,
+    };
+
+    const newLayoutItem: Layout = {
+      i: newWidgetId,
+      x,
+      y,
       w: widgetDef.defaultSize.w,
       h: widgetDef.defaultSize.h,
       minW: widgetDef.minSize.w,
@@ -187,6 +260,17 @@ export default function Home() {
 
               {/* Right section */}
               <div className="flex items-center justify-end gap-2">
+                {/* Add widget button */}
+                <button
+                  type="button"
+                  onClick={() => handleAddWidget("ai-canvas")}
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-stone-50 ring-1 ring-stone-200 transition-colors hover:bg-stone-100 dark:bg-stone-950 dark:ring-stone-800 dark:hover:bg-stone-900"
+                  aria-label="Add AI Canvas widget"
+                  title="Add AI Canvas widget"
+                >
+                  <PlusIcon className="size-4 text-stone-500 dark:text-stone-400" />
+                </button>
+
                 {/* Search icon pill */}
                 <button
                   type="button"
@@ -244,6 +328,7 @@ export default function Home() {
               currentPage={currentPage}
               onPageChange={setCurrentPage}
               onUpdatePage={handleUpdatePage}
+              onAddWidgetAtPosition={handleAddWidgetAtPosition}
               className=""
             />
         </div>

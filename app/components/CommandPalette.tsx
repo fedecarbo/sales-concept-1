@@ -218,7 +218,7 @@ export function CommandPalette({
       <div className="fixed inset-0 z-10 w-screen overflow-y-auto p-4 sm:p-6 md:p-20">
         <DialogPanel
           transition
-          className="mx-auto max-w-xl transform divide-y divide-stone-200 overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-stone-200 transition-all data-[closed]:scale-95 data-[closed]:opacity-0 data-[enter]:duration-200 data-[leave]:duration-150 data-[enter]:ease-out data-[leave]:ease-in dark:divide-stone-700 dark:bg-stone-900 dark:ring-stone-700"
+          className="mx-auto max-w-2xl transform divide-y divide-stone-200 overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-stone-200 transition-all data-[closed]:scale-95 data-[closed]:opacity-0 data-[enter]:duration-200 data-[leave]:duration-150 data-[enter]:ease-out data-[leave]:ease-in dark:divide-stone-700 dark:bg-stone-900 dark:ring-stone-700"
         >
           {/* Tab Switcher */}
           <div className="flex gap-1 p-2">
@@ -375,18 +375,19 @@ export function CommandPalette({
             <div>
               <div className="relative">
                 <SparklesIcon
-                  className="pointer-events-none absolute left-4 top-3.5 size-5 text-stone-400 dark:text-stone-500"
+                  className="pointer-events-none absolute left-4 top-4 size-5 text-stone-400 dark:text-stone-500"
                   aria-hidden="true"
                 />
-                <input
+                <textarea
                   autoFocus
-                  type="text"
-                  className="h-12 w-full border-0 bg-transparent pl-11 pr-4 text-stone-900 outline-none placeholder:text-stone-400 focus:ring-0 sm:text-sm dark:text-white dark:placeholder:text-stone-500"
+                  rows={2}
+                  className="w-full resize-none border-0 bg-transparent py-4 pl-11 pr-4 text-stone-900 outline-none placeholder:text-stone-400 focus:ring-0 sm:text-sm dark:text-white dark:placeholder:text-stone-500"
                   placeholder="Ask AI to create a workflow..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
                       handleAISubmit();
                     }
                   }}

@@ -6,6 +6,7 @@ import { ContextViewer } from "./types/ContextViewer";
 import { EmailComposer } from "./types/EmailComposer";
 import { EmailSender } from "./types/EmailSender";
 import { ActivityFeed } from "./types/ActivityFeed";
+import { AICanvas } from "./types/AICanvas";
 
 interface WidgetRendererProps {
   widgetId: string;
@@ -26,6 +27,8 @@ export function WidgetRenderer({ widgetId, type, stepNumber, animationDelay }: W
       return <EmailSender widgetId={widgetId} stepNumber={stepNumber} animationDelay={animationDelay} />;
     case "activity-feed":
       return <ActivityFeed widgetId={widgetId} stepNumber={stepNumber} animationDelay={animationDelay} />;
+    case "ai-canvas":
+      return <AICanvas widgetId={widgetId} stepNumber={stepNumber} animationDelay={animationDelay} />;
     default:
       return (
         <div className="flex h-full items-center justify-center text-stone-400">

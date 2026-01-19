@@ -51,6 +51,16 @@ export const widgetRegistry: Record<WidgetType, WidgetDefinition> = {
     defaultSize: { w: 3, h: 4 },
     minSize: { w: 2, h: 3 },
   },
+  "ai-canvas": {
+    type: "ai-canvas",
+    label: "AI Canvas",
+    description: "A blank canvas - ask AI to display anything",
+    icon: "SparklesIcon",
+    inputs: [],
+    outputs: [],
+    defaultSize: { w: 4, h: 4 },
+    minSize: { w: 2, h: 3 },
+  },
 };
 
 export function getWidgetDefinition(type: WidgetType): WidgetDefinition {

@@ -34,12 +34,22 @@ export function calculateWorkflowSteps(
     if (outgoing) outgoing.add(conn.targetWidgetId);
   }
 
+  // Identify widgets that are part of a workflow (have at least one connection)
+  const connectedWidgets = new Set<string>();
+  for (const conn of connections) {
+    connectedWidgets.add(conn.sourceWidgetId);
+    connectedWidgets.add(conn.targetWidgetId);
+  }
+
   // BFS to assign step numbers
-  // Start with widgets that have no incoming edges (sources)
+  // Start with widgets that have no incoming edges (sources) and are part of a workflow
   const queue: string[] = [];
   const visited = new Set<string>();
 
   for (const widgetId of widgetIds) {
+    // Only consider widgets that are part of a workflow
+    if (!connectedWidgets.has(widgetId)) continue;
+
     const incoming = incomingEdges.get(widgetId);
     if (incoming && incoming.size === 0) {
       queue.push(widgetId);
@@ -85,15 +95,8 @@ export function calculateWorkflowSteps(
     }
   }
 
-  // Handle any unvisited widgets (disconnected or in cycles)
-  // Give them a step number based on remaining unvisited
-  let maxStep = Math.max(0, ...Array.from(steps.values()));
-  for (const widgetId of widgetIds) {
-    if (!visited.has(widgetId)) {
-      maxStep++;
-      steps.set(widgetId, maxStep);
-    }
-  }
+  // Widgets that are not visited (disconnected with no connections)
+  // should NOT get step numbers - they're not part of a workflow
 
   return steps;
 }

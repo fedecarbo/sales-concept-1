@@ -5,7 +5,8 @@ export type WidgetType =
   | "context-viewer"
   | "email-composer"
   | "email-sender"
-  | "activity-feed";
+  | "activity-feed"
+  | "ai-canvas";
 
 export type DataPort = "client" | "context" | "email" | "action";
 

@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import GridLayout, { Layout } from "react-grid-layout";
 import { SparklesIcon, XMarkIcon } from "@heroicons/react/20/solid";
-import { WidgetInstance, WidgetConnection } from "@/app/types";
+import { WidgetInstance, WidgetConnection, WidgetType } from "@/app/types";
 import { WidgetRenderer } from "./WidgetRenderer";
 import { pageTemplates } from "@/app/lib/aiTemplates";
 import { calculateWorkflowSteps } from "@/app/lib/workflowUtils";
@@ -20,6 +20,8 @@ interface WidgetGridProps {
     connections: WidgetConnection[]
   ) => void;
   onRemoveWidget?: (widgetId: string) => void;
+  onAddWidgetAtPosition?: (widgetType: WidgetType, x: number, y: number) => void;
+  onLayoutChange?: (layout: Layout[]) => void;
 }
 
 export function WidgetGrid({
@@ -30,6 +32,8 @@ export function WidgetGrid({
   pageId,
   onApplyTemplate,
   onRemoveWidget,
+  onAddWidgetAtPosition,
+  onLayoutChange: onLayoutChangeProp,
 }: WidgetGridProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 1200, height: 600 });
@@ -75,7 +79,9 @@ export function WidgetGrid({
 
   const onLayoutChange = useCallback((newLayout: Layout[]) => {
     setLayout(newLayout);
-  }, []);
+    // Propagate layout changes to parent
+    onLayoutChangeProp?.(newLayout);
+  }, [onLayoutChangeProp]);
 
   // Get widget type by layout item ID
   const getWidgetType = useCallback(
@@ -224,10 +230,10 @@ export function WidgetGrid({
         </GridLayout>
       </div>
 
-      {/* Empty state with AI input */}
+      {/* Empty state with AI input - positioned at bottom, z-20 but pointer-events-none */}
       {isEmpty && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <div className="flex flex-col items-center gap-6 text-center max-w-md px-4">
+        <div className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-end pb-8">
+          <div className="pointer-events-auto flex flex-col items-center gap-5 text-center max-w-lg px-6 rounded-2xl bg-white/80 dark:bg-stone-900/80 backdrop-blur-sm p-8 shadow-lg ring-1 ring-stone-200/50 dark:ring-stone-700/50">
             {/* AI sparkle icon */}
             <div className="relative">
               <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/40 dark:to-primary-800/40 flex items-center justify-center">
@@ -311,26 +317,35 @@ export function WidgetGrid({
         </div>
       )}
 
-      {/* Actual widgets */}
-      {!isEmpty && (
+      {/* Actual widgets - always rendered for drop support */}
+      <div className="absolute inset-0 z-10">
         <GridLayout
           className="layout"
-          layout={layout}
-          cols={cols}
-          rowHeight={rowHeight}
-          width={dimensions.width}
-          margin={margin}
-          containerPadding={[0, 0]}
-          onLayoutChange={onLayoutChange}
-          draggableHandle=".widget-drag-handle"
-          resizeHandles={["se", "sw", "ne", "nw", "e", "w", "n", "s"]}
-          useCSSTransforms={true}
-          compactType={null}
-          preventCollision={true}
-          isBounded={true}
-          maxRows={rows}
-          autoSize={false}
-        >
+          style={{ minHeight: dimensions.height, height: "100%" }}
+        layout={layout}
+        cols={cols}
+        rowHeight={rowHeight}
+        width={dimensions.width}
+        margin={margin}
+        containerPadding={[0, 0]}
+        onLayoutChange={onLayoutChange}
+        draggableHandle=".widget-drag-handle"
+        resizeHandles={["se", "sw", "ne", "nw", "e", "w", "n", "s"]}
+        useCSSTransforms={true}
+        compactType={null}
+        preventCollision={true}
+        isBounded={true}
+        maxRows={rows}
+        autoSize={false}
+        isDroppable={true}
+        droppingItem={{ i: "__dropping-elem__", w: 4, h: 4 }}
+        onDrop={(_layout, layoutItem, event) => {
+          const widgetType = (event as DragEvent).dataTransfer?.getData("widgetType") as WidgetType;
+          if (widgetType && onAddWidgetAtPosition) {
+            onAddWidgetAtPosition(widgetType, layoutItem.x, layoutItem.y);
+          }
+        }}
+      >
           {layout.map((item) => {
             const widgetType = getWidgetType(item.i);
             const stepNumber = workflowSteps.get(item.i);
@@ -369,7 +384,7 @@ export function WidgetGrid({
             );
           })}
         </GridLayout>
-      )}
+      </div>
     </div>
   );
 }

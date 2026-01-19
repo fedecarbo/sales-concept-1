@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, PencilIcon, CheckIcon, TrashIcon } from "@heroicons/react/20/solid";
 import { Layout } from "react-grid-layout";
 import { WidgetGrid } from "./WidgetGrid";
-import { Page, WidgetInstance, WidgetConnection } from "@/app/types";
+import { Page, WidgetInstance, WidgetConnection, WidgetType } from "@/app/types";
 
 // Re-export Page type for convenience
 export type { Page } from "@/app/types";
@@ -207,6 +207,7 @@ interface PageCarouselProps {
       connections?: WidgetConnection[];
     }
   ) => void;
+  onAddWidgetAtPosition?: (widgetType: WidgetType, x: number, y: number) => void;
   className?: string;
 }
 
@@ -215,6 +216,7 @@ export function PageCarousel({
   currentPage,
   onPageChange,
   onUpdatePage,
+  onAddWidgetAtPosition,
   className = "",
 }: PageCarouselProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -312,6 +314,15 @@ export function PageCarousel({
     [onUpdatePage]
   );
 
+  const handleLayoutChange = useCallback(
+    (pageIndex: number) => (layout: Layout[]) => {
+      if (onUpdatePage) {
+        onUpdatePage(pageIndex, { layout });
+      }
+    },
+    [onUpdatePage]
+  );
+
   return (
     <div
       ref={containerRef}
@@ -331,6 +342,8 @@ export function PageCarousel({
             pageId={page.id}
             onApplyTemplate={handleApplyTemplate(index)}
             onRemoveWidget={handleRemoveWidget(index, page)}
+            onAddWidgetAtPosition={index === currentPage ? onAddWidgetAtPosition : undefined}
+            onLayoutChange={handleLayoutChange(index)}
           />
         </div>
       ))}
