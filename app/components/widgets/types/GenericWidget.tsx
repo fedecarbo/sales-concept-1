@@ -5,10 +5,11 @@ import { SparklesIcon, ArrowPathIcon } from "@heroicons/react/20/solid";
 import { WidgetCard } from "../WidgetCard";
 import { WidgetHeader } from "../WidgetHeader";
 import { WidgetFooter } from "../WidgetFooter";
-import { WidgetTable, TableColumn } from "../ui";
+import { WidgetTable, TableColumn, WidgetCalendar } from "../ui";
 import {
   mockContacts,
   mockDeals,
+  mockCalendarEvents,
   widgetAsks,
   Contact,
   Deal,
@@ -21,7 +22,7 @@ interface GenericWidgetProps {
   isDragging?: boolean;
 }
 
-type ContentType = "empty" | "contacts" | "deals";
+type ContentType = "empty" | "contacts" | "deals" | "calendar";
 
 // Status badge component
 function StatusBadge({ status }: { status: string }) {
@@ -271,6 +272,10 @@ export function GenericWidget({
           keyExtractor={(deal) => deal.id}
         />
       );
+    }
+
+    if (contentType === "calendar") {
+      return <WidgetCalendar events={mockCalendarEvents} />;
     }
 
     return null;

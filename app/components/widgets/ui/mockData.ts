@@ -18,6 +18,15 @@ export interface Deal {
   probability: number;
 }
 
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  date: string;
+  time?: string;
+  type: "meeting" | "deadline" | "reminder" | "follow-up";
+  attendees?: { name: string; avatar?: string }[];
+}
+
 export const mockContacts: Contact[] = [
   {
     id: "1",
@@ -123,12 +132,84 @@ export const mockDeals: Deal[] = [
   },
 ];
 
+// Helper to get dates relative to today
+const getRelativeDate = (daysFromNow: number): string => {
+  const date = new Date();
+  date.setDate(date.getDate() + daysFromNow);
+  return date.toISOString().split("T")[0];
+};
+
+export const mockCalendarEvents: CalendarEvent[] = [
+  {
+    id: "1",
+    title: "Discovery call with Acme Corp",
+    date: getRelativeDate(0),
+    time: "10:00 AM",
+    type: "meeting",
+    attendees: [
+      { name: "Sarah Chen", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face" },
+    ],
+  },
+  {
+    id: "2",
+    title: "Proposal deadline - TechStart",
+    date: getRelativeDate(1),
+    type: "deadline",
+  },
+  {
+    id: "3",
+    title: "Follow up with Marcus Johnson",
+    date: getRelativeDate(2),
+    time: "2:00 PM",
+    type: "follow-up",
+    attendees: [
+      { name: "Marcus Johnson", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face" },
+    ],
+  },
+  {
+    id: "4",
+    title: "Quarterly review prep",
+    date: getRelativeDate(3),
+    type: "reminder",
+  },
+  {
+    id: "5",
+    title: "Demo for Global Inc",
+    date: getRelativeDate(5),
+    time: "11:00 AM",
+    type: "meeting",
+    attendees: [
+      { name: "Emily Rodriguez", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face" },
+      { name: "David Kim", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face" },
+    ],
+  },
+  {
+    id: "6",
+    title: "Contract review - Innovate Co",
+    date: getRelativeDate(7),
+    time: "3:30 PM",
+    type: "meeting",
+  },
+  {
+    id: "7",
+    title: "Send pricing update to NexGen",
+    date: getRelativeDate(10),
+    type: "follow-up",
+  },
+  {
+    id: "8",
+    title: "End of quarter deadline",
+    date: getRelativeDate(14),
+    type: "deadline",
+  },
+];
+
 // Preset asks for the AI chat interface
 export interface WidgetAsk {
   id: string;
   label: string;
   keywords: string[];
-  contentType: "contacts" | "deals";
+  contentType: "contacts" | "deals" | "calendar";
   title: string;
 }
 
@@ -146,5 +227,12 @@ export const widgetAsks: WidgetAsk[] = [
     keywords: ["deals", "pipeline", "opportunities", "sales"],
     contentType: "deals",
     title: "My Deals",
+  },
+  {
+    id: "calendar",
+    label: "Show my calendar",
+    keywords: ["calendar", "schedule", "meetings", "events", "agenda"],
+    contentType: "calendar",
+    title: "My Calendar",
   },
 ];
