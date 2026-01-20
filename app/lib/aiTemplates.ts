@@ -1,4 +1,4 @@
-import { WidgetInstance, WidgetConnection, Page, LayoutItem } from "@/app/types";
+import { WidgetInstance, Page, LayoutItem } from "@/app/types";
 
 export interface PageTemplate {
   id: string;
@@ -7,66 +7,56 @@ export interface PageTemplate {
   keywords: string[];
   widgets: WidgetInstance[];
   layout: LayoutItem[];
-  connections: WidgetConnection[];
 }
 
 export const pageTemplates: PageTemplate[] = [
   {
-    id: "email-workflow",
-    name: "Email Workflow",
-    description: "Select a client, review their context, compose an AI-assisted email, and send",
-    keywords: ["email", "write", "send", "message", "reach out", "contact", "outreach"],
+    id: "two-column",
+    name: "Two Column Layout",
+    description: "A simple two-column grid layout",
+    keywords: ["two", "column", "side", "split"],
     widgets: [
-      { id: "w1", type: "client-selector" },
-      { id: "w2", type: "context-viewer" },
-      { id: "w3", type: "email-composer" },
-      { id: "w4", type: "email-sender" },
+      { id: "w1", type: "generic" },
+      { id: "w2", type: "generic" },
     ],
     layout: [
-      { i: "w1", x: 0, y: 0, w: 3, h: 4, minW: 2, minH: 2 },
-      { i: "w2", x: 3, y: 0, w: 4, h: 2, minW: 3, minH: 2 },
-      { i: "w3", x: 7, y: 0, w: 5, h: 4, minW: 4, minH: 2 },
-      { i: "w4", x: 3, y: 2, w: 4, h: 2, minW: 3, minH: 2 },
-    ],
-    connections: [
-      { id: "c1", sourceWidgetId: "w1", sourcePort: "client", targetWidgetId: "w2", targetPort: "client" },
-      { id: "c2", sourceWidgetId: "w1", sourcePort: "client", targetWidgetId: "w3", targetPort: "client" },
-      { id: "c3", sourceWidgetId: "w2", sourcePort: "context", targetWidgetId: "w3", targetPort: "context" },
-      { id: "c4", sourceWidgetId: "w3", sourcePort: "email", targetWidgetId: "w4", targetPort: "email" },
+      { i: "w1", x: 0, y: 0, w: 6, h: 4, minW: 2, minH: 2 },
+      { i: "w2", x: 6, y: 0, w: 6, h: 4, minW: 2, minH: 2 },
     ],
   },
   {
-    id: "client-review",
-    name: "Client Review",
-    description: "Deep dive into a client's history, deals, and recent activity",
-    keywords: ["review", "client", "history", "activity", "deals", "research"],
+    id: "three-column",
+    name: "Three Column Layout",
+    description: "A balanced three-column grid layout",
+    keywords: ["three", "column", "grid", "triple"],
     widgets: [
-      { id: "w1", type: "client-selector" },
-      { id: "w2", type: "context-viewer" },
-      { id: "w3", type: "activity-feed" },
+      { id: "w1", type: "generic" },
+      { id: "w2", type: "generic" },
+      { id: "w3", type: "generic" },
     ],
     layout: [
-      { i: "w1", x: 0, y: 0, w: 3, h: 4, minW: 2, minH: 2 },
-      { i: "w2", x: 3, y: 0, w: 5, h: 4, minW: 3, minH: 2 },
+      { i: "w1", x: 0, y: 0, w: 4, h: 4, minW: 2, minH: 2 },
+      { i: "w2", x: 4, y: 0, w: 4, h: 4, minW: 2, minH: 2 },
       { i: "w3", x: 8, y: 0, w: 4, h: 4, minW: 2, minH: 2 },
     ],
-    connections: [
-      { id: "c1", sourceWidgetId: "w1", sourcePort: "client", targetWidgetId: "w2", targetPort: "client" },
-      { id: "c2", sourceWidgetId: "w1", sourcePort: "client", targetWidgetId: "w3", targetPort: "client" },
-    ],
   },
   {
-    id: "activity-overview",
-    name: "Activity Overview",
-    description: "Monitor all recent interactions and activity across your accounts",
-    keywords: ["activity", "feed", "monitor", "interactions", "updates"],
+    id: "dashboard",
+    name: "Dashboard Layout",
+    description: "A dashboard with multiple widget sizes",
+    keywords: ["dashboard", "overview", "monitor"],
     widgets: [
-      { id: "w1", type: "activity-feed" },
+      { id: "w1", type: "generic" },
+      { id: "w2", type: "generic" },
+      { id: "w3", type: "generic" },
+      { id: "w4", type: "generic" },
     ],
     layout: [
-      { i: "w1", x: 0, y: 0, w: 12, h: 4, minW: 4, minH: 2 },
+      { i: "w1", x: 0, y: 0, w: 8, h: 3, minW: 2, minH: 2 },
+      { i: "w2", x: 8, y: 0, w: 4, h: 3, minW: 2, minH: 2 },
+      { i: "w3", x: 0, y: 3, w: 4, h: 3, minW: 2, minH: 2 },
+      { i: "w4", x: 4, y: 3, w: 8, h: 3, minW: 2, minH: 2 },
     ],
-    connections: [],
   },
 ];
 
@@ -85,7 +75,6 @@ export function matchTemplate(query: string): PageTemplate | null {
 }
 
 export function applyTemplate(template: PageTemplate, pageId: string): Partial<Page> {
-  // Generate unique IDs based on page ID
   const widgetIdMap = new Map<string, string>();
 
   const widgets = template.widgets.map((w) => {
@@ -99,16 +88,8 @@ export function applyTemplate(template: PageTemplate, pageId: string): Partial<P
     i: widgetIdMap.get(l.i) || l.i,
   }));
 
-  const connections = template.connections.map((c) => ({
-    ...c,
-    id: `${pageId}-${c.id}`,
-    sourceWidgetId: widgetIdMap.get(c.sourceWidgetId) || c.sourceWidgetId,
-    targetWidgetId: widgetIdMap.get(c.targetWidgetId) || c.targetWidgetId,
-  }));
-
   return {
     layout,
     widgets,
-    connections,
   };
 }

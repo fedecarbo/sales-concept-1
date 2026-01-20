@@ -3,23 +3,13 @@ import type { LayoutItem as RGLLayoutItem, Layout as RGLLayout } from "react-gri
 export type LayoutItem = RGLLayoutItem;
 export type Layout = RGLLayout;
 
-export type WidgetType =
-  | "client-selector"
-  | "context-viewer"
-  | "email-composer"
-  | "email-sender"
-  | "activity-feed"
-  | "ai-canvas";
-
-export type DataPort = "client" | "context" | "email" | "action";
+export type WidgetType = "generic";
 
 export interface WidgetDefinition {
   type: WidgetType;
   label: string;
   description: string;
   icon: string;
-  inputs: DataPort[];
-  outputs: DataPort[];
   defaultSize: { w: number; h: number };
   minSize: { w: number; h: number };
 }
@@ -29,20 +19,11 @@ export interface WidgetInstance {
   type: WidgetType;
 }
 
-export interface WidgetConnection {
-  id: string;
-  sourceWidgetId: string;
-  sourcePort: DataPort;
-  targetWidgetId: string;
-  targetPort: DataPort;
-}
-
 export interface Page {
   id: string;
   name: string;
   layout: LayoutItem[];
   widgets: WidgetInstance[];
-  connections: WidgetConnection[];
 }
 
 export interface Persona {

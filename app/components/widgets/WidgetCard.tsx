@@ -1,14 +1,12 @@
 "use client";
 
 import { ReactNode } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { WorkflowBadge } from "./WorkflowBadge";
+import { motion } from "framer-motion";
 import { springConfigs, widgetCardVariants } from "@/app/lib/animations";
 
 interface WidgetCardProps {
   children: ReactNode;
   className?: string;
-  stepNumber?: number;
   animationDelay?: number;
   isDragging?: boolean;
 }
@@ -16,7 +14,6 @@ interface WidgetCardProps {
 export function WidgetCard({
   children,
   className = "",
-  stepNumber,
   animationDelay,
   isDragging = false,
 }: WidgetCardProps) {
@@ -37,9 +34,6 @@ export function WidgetCard({
         delay: delaySeconds,
       }}
     >
-      <AnimatePresence>
-        {stepNumber !== undefined && <WorkflowBadge step={stepNumber} />}
-      </AnimatePresence>
       <motion.div
         className={`flex h-full flex-col divide-y divide-stone-200 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 dark:divide-white/10 dark:bg-stone-900 dark:shadow-none dark:ring-white/10 ${className}`}
         animate={{

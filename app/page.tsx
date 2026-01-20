@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { MagnifyingGlassIcon, BellIcon, Cog6ToothIcon, SparklesIcon, PlusIcon } from "@heroicons/react/20/solid";
+import { MagnifyingGlassIcon, BellIcon, Cog6ToothIcon, SparklesIcon, PlusIcon, Squares2X2Icon } from "@heroicons/react/20/solid";
 import { PageCarousel, PageCarouselNav, defaultPages } from "./components/widgets";
 import { WidgetProvider } from "./context/WidgetContext";
 import { CommandPalette } from "./components/CommandPalette";
-import { Page, WidgetInstance, WidgetConnection, WidgetType, LayoutItem } from "./types";
+import { Page, WidgetInstance, WidgetType, LayoutItem } from "./types";
 import { pageTemplates, applyTemplate, PageTemplate } from "./lib/aiTemplates";
 import { widgetRegistry } from "./lib/widgetRegistry";
 import { personas, fcPersona } from "./data/personas";
@@ -52,7 +52,6 @@ export default function Home() {
       name: `Page ${newPageNumber}`,
       layout: [],
       widgets: [],
-      connections: [],
     };
     setPages((prev) => [...prev, newPage]);
     setTimeout(() => {
@@ -85,7 +84,6 @@ export default function Home() {
       updates: {
         widgets?: WidgetInstance[];
         layout?: LayoutItem[];
-        connections?: WidgetConnection[];
       }
     ) => {
       setPages((prev) =>
@@ -95,7 +93,6 @@ export default function Home() {
                 ...page,
                 ...(updates.widgets && { widgets: updates.widgets }),
                 ...(updates.layout && { layout: updates.layout }),
-                ...(updates.connections && { connections: updates.connections }),
               }
             : page
         )
@@ -115,7 +112,6 @@ export default function Home() {
               ...page,
               widgets: updates.widgets || page.widgets,
               layout: updates.layout || page.layout,
-              connections: updates.connections || page.connections,
             }
           : page
       )
@@ -256,17 +252,7 @@ export default function Home() {
               <div className="flex items-center gap-2">
                 {/* Logo pill */}
                 <div className="flex h-10 items-center rounded-full bg-stone-50 px-3 ring-1 ring-stone-200 dark:bg-stone-950 dark:ring-stone-800">
-                  <svg
-                    className="h-5 w-5 text-stone-900 dark:text-white"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <rect x="1" y="1" width="10" height="10" rx="2" fill="currentColor" />
-                    <rect x="13" y="1" width="10" height="10" rx="2" fill="currentColor" opacity="0.5" />
-                    <rect x="1" y="13" width="10" height="10" rx="2" fill="currentColor" opacity="0.5" />
-                    <rect x="13" y="13" width="10" height="10" rx="2" fill="currentColor" opacity="0.25" />
-                  </svg>
+                  <Squares2X2Icon className="h-5 w-5 text-stone-900 dark:text-white" />
                 </div>
               </div>
 
@@ -287,10 +273,10 @@ export default function Home() {
                 {/* Add widget button */}
                 <button
                   type="button"
-                  onClick={() => handleAddWidget("ai-canvas")}
+                  onClick={() => handleAddWidget("generic")}
                   className="flex h-10 w-10 items-center justify-center rounded-full bg-stone-50 ring-1 ring-stone-200 transition-colors hover:bg-stone-100 dark:bg-stone-950 dark:ring-stone-800 dark:hover:bg-stone-900"
-                  aria-label="Add AI Canvas widget"
-                  title="Add AI Canvas widget"
+                  aria-label="Add widget"
+                  title="Add widget"
                 >
                   <PlusIcon className="size-4 text-stone-500 dark:text-stone-400" />
                 </button>

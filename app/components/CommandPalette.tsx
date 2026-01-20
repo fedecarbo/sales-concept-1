@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogPanel,
@@ -13,17 +13,14 @@ import {
 import {
   MagnifyingGlassIcon,
   SparklesIcon,
-  UserIcon,
   DocumentIcon,
   Squares2X2Icon,
-  EnvelopeIcon,
-  ChatBubbleLeftIcon,
-  ClipboardDocumentListIcon,
+  ViewColumnsIcon,
+  TableCellsIcon,
 } from "@heroicons/react/20/solid";
-import { useWidget } from "@/app/context/WidgetContext";
 import { widgetRegistry } from "@/app/lib/widgetRegistry";
 import { pageTemplates, PageTemplate } from "@/app/lib/aiTemplates";
-import { Page, Client, WidgetType } from "@/app/types";
+import { Page, WidgetType } from "@/app/types";
 
 type TabType = "search" | "ai";
 
@@ -38,14 +35,14 @@ interface CommandPaletteProps {
   onAddWidget: (widgetType: WidgetType) => void;
 }
 
-type SearchResultType = "client" | "page" | "widget";
+type SearchResultType = "page" | "widget";
 
 interface SearchResult {
   id: string;
   type: SearchResultType;
   label: string;
   subtitle?: string;
-  data: Client | Page | { type: WidgetType; label: string };
+  data: Page | { type: WidgetType; label: string };
 }
 
 export function CommandPalette({
@@ -60,7 +57,6 @@ export function CommandPalette({
 }: CommandPaletteProps) {
   const [activeTab, setActiveTab] = useState<TabType>(defaultTab);
   const [query, setQuery] = useState("");
-  const { clients, actions } = useWidget();
 
   // Reset state when opening
   useEffect(() => {
@@ -76,23 +72,6 @@ export function CommandPalette({
 
     const results: SearchResult[] = [];
     const normalizedQuery = query.toLowerCase().trim();
-
-    // Search clients
-    const filteredClients = clients.filter(
-      (client) =>
-        client.name.toLowerCase().includes(normalizedQuery) ||
-        client.company.toLowerCase().includes(normalizedQuery) ||
-        client.email.toLowerCase().includes(normalizedQuery)
-    );
-    filteredClients.forEach((client) => {
-      results.push({
-        id: `client-${client.id}`,
-        type: "client",
-        label: client.name,
-        subtitle: client.company,
-        data: client,
-      });
-    });
 
     // Search pages
     const filteredPages = pages.filter((page) =>
@@ -127,12 +106,11 @@ export function CommandPalette({
     });
 
     return results;
-  }, [activeTab, query, clients, pages, currentPage]);
+  }, [activeTab, query, pages, currentPage]);
 
   // Group results by type
   const groupedResults = useMemo(() => {
     const groups: Record<SearchResultType, SearchResult[]> = {
-      client: [],
       page: [],
       widget: [],
     };
@@ -146,9 +124,6 @@ export function CommandPalette({
     if (!result) return;
 
     switch (result.type) {
-      case "client":
-        actions.selectClient(result.data as Client);
-        break;
       case "page":
         const pageIndex = pages.findIndex((p) => p.id === (result.data as Page).id);
         if (pageIndex !== -1) {
@@ -186,8 +161,6 @@ export function CommandPalette({
 
   const getResultIcon = (type: SearchResultType) => {
     switch (type) {
-      case "client":
-        return UserIcon;
       case "page":
         return DocumentIcon;
       case "widget":
@@ -197,14 +170,14 @@ export function CommandPalette({
 
   const getTemplateIcon = (templateId: string) => {
     switch (templateId) {
-      case "email-workflow":
-        return EnvelopeIcon;
-      case "client-review":
-        return UserIcon;
-      case "activity-overview":
-        return ClipboardDocumentListIcon;
+      case "two-column":
+        return ViewColumnsIcon;
+      case "three-column":
+        return ViewColumnsIcon;
+      case "dashboard":
+        return TableCellsIcon;
       default:
-        return ChatBubbleLeftIcon;
+        return Squares2X2Icon;
     }
   };
 
@@ -263,7 +236,7 @@ export function CommandPalette({
                 <ComboboxInput
                   autoFocus
                   className="h-12 w-full border-0 bg-transparent pl-11 pr-4 text-stone-900 outline-none placeholder:text-stone-400 focus:ring-0 sm:text-sm dark:text-white dark:placeholder:text-stone-500"
-                  placeholder="Search clients, pages, widgets..."
+                  placeholder="Search pages, widgets..."
                   onChange={(event) => setQuery(event.target.value)}
                   onBlur={() => {}}
                 />
@@ -273,38 +246,8 @@ export function CommandPalette({
                 static
                 className="max-h-80 scroll-py-2 overflow-y-auto py-2"
               >
-                {groupedResults.client.length > 0 && (
-                  <div className="px-2">
-                    <h3 className="mb-1 px-2 text-xs font-semibold uppercase tracking-wider text-stone-400 dark:text-stone-500">
-                      Clients
-                    </h3>
-                    {groupedResults.client.map((result) => {
-                      const Icon = getResultIcon(result.type);
-                      return (
-                        <ComboboxOption
-                          key={result.id}
-                          value={result}
-                          className="group flex cursor-default select-none items-center gap-3 rounded-lg px-2 py-2 data-[focus]:bg-stone-100 dark:data-[focus]:bg-stone-800"
-                        >
-                          <Icon className="size-5 text-stone-400 group-data-[focus]:text-stone-600 dark:text-stone-500 dark:group-data-[focus]:text-stone-300" />
-                          <div className="flex-1 truncate">
-                            <span className="text-sm text-stone-900 dark:text-white">
-                              {result.label}
-                            </span>
-                            {result.subtitle && (
-                              <span className="ml-2 text-sm text-stone-500 dark:text-stone-400">
-                                {result.subtitle}
-                              </span>
-                            )}
-                          </div>
-                        </ComboboxOption>
-                      );
-                    })}
-                  </div>
-                )}
-
                 {groupedResults.page.length > 0 && (
-                  <div className="mt-2 px-2">
+                  <div className="px-2">
                     <h3 className="mb-1 px-2 text-xs font-semibold uppercase tracking-wider text-stone-400 dark:text-stone-500">
                       Pages
                     </h3>
@@ -382,7 +325,7 @@ export function CommandPalette({
                   autoFocus
                   rows={2}
                   className="w-full resize-none border-0 bg-transparent py-4 pl-11 pr-4 text-stone-900 outline-none placeholder:text-stone-400 focus:ring-0 sm:text-sm dark:text-white dark:placeholder:text-stone-500"
-                  placeholder="Ask AI to create a workflow..."
+                  placeholder="Ask AI to create a layout..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={(e) => {
@@ -397,7 +340,7 @@ export function CommandPalette({
               <div className="max-h-80 overflow-y-auto py-4">
                 <div className="px-4">
                   <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-stone-400 dark:text-stone-500">
-                    Quick Actions
+                    Layout Templates
                   </h3>
                   <div className="space-y-2">
                     {pageTemplates.map((template) => {
@@ -428,7 +371,7 @@ export function CommandPalette({
                 {query && (
                   <div className="mt-4 border-t border-stone-200 px-4 pt-4 dark:border-stone-700">
                     <p className="text-xs text-stone-500 dark:text-stone-400">
-                      Press <kbd className="rounded bg-stone-100 px-1 py-0.5 text-xs font-medium dark:bg-stone-800">Enter</kbd> to create a workflow based on your prompt
+                      Press <kbd className="rounded bg-stone-100 px-1 py-0.5 text-xs font-medium dark:bg-stone-800">Enter</kbd> to create a layout based on your prompt
                     </p>
                   </div>
                 )}

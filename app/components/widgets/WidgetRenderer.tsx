@@ -1,42 +1,30 @@
 "use client";
 
 import { WidgetType } from "@/app/types";
-import { ClientSelector } from "./types/ClientSelector";
-import { ContextViewer } from "./types/ContextViewer";
-import { EmailComposer } from "./types/EmailComposer";
-import { EmailSender } from "./types/EmailSender";
-import { ActivityFeed } from "./types/ActivityFeed";
-import { AICanvas } from "./types/AICanvas";
+import { GenericWidget } from "./types/GenericWidget";
+import { getWidgetDefinition } from "@/app/lib/widgetRegistry";
 
 interface WidgetRendererProps {
   widgetId: string;
   type: WidgetType;
-  stepNumber?: number;
   animationDelay?: number;
   isDragging?: boolean;
 }
 
-export function WidgetRenderer({ widgetId, type, stepNumber, animationDelay, isDragging }: WidgetRendererProps) {
-  const commonProps = { widgetId, stepNumber, animationDelay, isDragging };
+export function WidgetRenderer({
+  widgetId,
+  type,
+  animationDelay,
+  isDragging,
+}: WidgetRendererProps) {
+  const definition = getWidgetDefinition(type);
 
-  switch (type) {
-    case "client-selector":
-      return <ClientSelector {...commonProps} />;
-    case "context-viewer":
-      return <ContextViewer {...commonProps} />;
-    case "email-composer":
-      return <EmailComposer {...commonProps} />;
-    case "email-sender":
-      return <EmailSender {...commonProps} />;
-    case "activity-feed":
-      return <ActivityFeed {...commonProps} />;
-    case "ai-canvas":
-      return <AICanvas {...commonProps} />;
-    default:
-      return (
-        <div className="flex h-full items-center justify-center text-stone-400">
-          Unknown widget type
-        </div>
-      );
-  }
+  return (
+    <GenericWidget
+      widgetId={widgetId}
+      title={definition?.label ?? "Widget"}
+      animationDelay={animationDelay}
+      isDragging={isDragging}
+    />
+  );
 }

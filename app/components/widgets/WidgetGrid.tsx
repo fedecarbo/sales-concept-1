@@ -2,23 +2,20 @@
 
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import GridLayout, { Layout, LayoutItem } from "react-grid-layout/legacy";
-import { SparklesIcon, XMarkIcon } from "@heroicons/react/20/solid";
-import { WidgetInstance, WidgetConnection, WidgetType } from "@/app/types";
+import { SparklesIcon, XMarkIcon, ArrowPathIcon } from "@heroicons/react/20/solid";
+import { WidgetInstance, WidgetType } from "@/app/types";
 import { WidgetRenderer } from "./WidgetRenderer";
 import { pageTemplates } from "@/app/lib/aiTemplates";
-import { calculateWorkflowSteps } from "@/app/lib/workflowUtils";
 import { SnapGuides, SnapGuide } from "./SnapGuides";
 
 interface WidgetGridProps {
   className?: string;
   layout?: LayoutItem[];
   widgets?: WidgetInstance[];
-  connections?: WidgetConnection[];
   pageId?: string;
   onApplyTemplate?: (
     widgets: WidgetInstance[],
-    layout: LayoutItem[],
-    connections: WidgetConnection[]
+    layout: LayoutItem[]
   ) => void;
   onRemoveWidget?: (widgetId: string) => void;
   onAddWidgetAtPosition?: (widgetType: WidgetType, x: number, y: number) => void;
@@ -29,7 +26,6 @@ export function WidgetGrid({
   className = "",
   layout: propLayout,
   widgets: propWidgets,
-  connections: propConnections = [],
   pageId,
   onApplyTemplate,
   onRemoveWidget,
@@ -220,7 +216,7 @@ export function WidgetGrid({
       template.keywords.some((keyword) => normalizedQuery.includes(keyword))
     );
 
-    // Default to email workflow if no match
+    // Default to first template if no match
     if (!matchedTemplate) {
       matchedTemplate = pageTemplates[0];
     }
@@ -238,14 +234,7 @@ export function WidgetGrid({
       i: widgetIdMap.get(l.i) || l.i,
     }));
 
-    const connections = matchedTemplate.connections.map((c) => ({
-      ...c,
-      id: `${pageId}-${c.id}`,
-      sourceWidgetId: widgetIdMap.get(c.sourceWidgetId) || c.sourceWidgetId,
-      targetWidgetId: widgetIdMap.get(c.targetWidgetId) || c.targetWidgetId,
-    }));
-
-    onApplyTemplate(widgets, newLayout, connections);
+    onApplyTemplate(widgets, newLayout);
     setAiQuery("");
     setIsThinking(false);
 
@@ -275,14 +264,7 @@ export function WidgetGrid({
         i: widgetIdMap.get(l.i) || l.i,
       }));
 
-      const connections = template.connections.map((c) => ({
-        ...c,
-        id: `${pageId}-${c.id}`,
-        sourceWidgetId: widgetIdMap.get(c.sourceWidgetId) || c.sourceWidgetId,
-        targetWidgetId: widgetIdMap.get(c.targetWidgetId) || c.targetWidgetId,
-      }));
-
-      onApplyTemplate(widgets, newLayout, connections);
+      onApplyTemplate(widgets, newLayout);
       setIsThinking(false);
 
       // Trigger staggered animation
@@ -309,12 +291,6 @@ export function WidgetGrid({
     }
     return cells;
   }, [rows, cols]);
-
-  // Calculate workflow step numbers from connections
-  const workflowSteps = useMemo(() => {
-    const widgetIds = propWidgets?.map((w) => w.id) || [];
-    return calculateWorkflowSteps(widgetIds, propConnections);
-  }, [propWidgets, propConnections]);
 
   const isEmpty = layout.length === 0;
 
@@ -376,7 +352,7 @@ export function WidgetGrid({
                   onKeyDown={(e) => {
                     if (e.key === "Enter") handleAiSubmit();
                   }}
-                  placeholder="e.g., I want to write emails to my clients"
+                  placeholder="e.g., I want a dashboard layout"
                   disabled={isThinking}
                   className="w-full px-4 py-3 pr-12 text-sm bg-white dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder:text-stone-400 dark:placeholder:text-stone-500 disabled:opacity-50"
                 />
@@ -386,26 +362,7 @@ export function WidgetGrid({
                   className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-stone-900 dark:bg-white text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {isThinking ? (
-                    <svg
-                      className="animate-spin h-4 w-4"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      />
-                    </svg>
+                    <ArrowPathIcon className="h-4 w-4 animate-spin" />
                   ) : (
                     <SparklesIcon className="h-4 w-4" />
                   )}
@@ -463,20 +420,16 @@ export function WidgetGrid({
             }
           }}
         >
-          {layout.map((item) => {
+          {layout.map((item, index) => {
             const widgetType = getWidgetType(item.i);
-            const stepNumber = workflowSteps.get(item.i);
-            // Stagger animation delay based on step number (150ms per step)
-            const animationDelay = isAnimating && stepNumber !== undefined
-              ? (stepNumber - 1) * 150
-              : undefined;
+            // Simple animation delay based on index
+            const animationDelay = isAnimating ? index * 150 : undefined;
             return (
               <div key={item.i} className="group/widget relative">
                 {widgetType ? (
                   <WidgetRenderer
                     widgetId={item.i}
                     type={widgetType}
-                    stepNumber={stepNumber}
                     animationDelay={animationDelay}
                     isDragging={draggingItemId === item.i}
                   />

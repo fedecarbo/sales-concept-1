@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, PencilIcon, CheckIcon, TrashIcon } from "@heroicons/react/20/solid";
 import { WidgetGrid } from "./WidgetGrid";
-import { Page, WidgetInstance, WidgetConnection, WidgetType, LayoutItem } from "@/app/types";
+import { Page, WidgetInstance, WidgetType, LayoutItem } from "@/app/types";
 
 // Re-export Page type for convenience
 export type { Page } from "@/app/types";
@@ -14,7 +14,6 @@ export const defaultPages: Page[] = [
     name: "Overview",
     layout: [],
     widgets: [],
-    connections: [],
   },
 ];
 
@@ -203,7 +202,6 @@ interface PageCarouselProps {
     updates: {
       widgets?: WidgetInstance[];
       layout?: LayoutItem[];
-      connections?: WidgetConnection[];
     }
   ) => void;
   onAddWidgetAtPosition?: (widgetType: WidgetType, x: number, y: number) => void;
@@ -284,9 +282,9 @@ export function PageCarousel({
 
   const handleApplyTemplate = useCallback(
     (pageIndex: number) =>
-      (widgets: WidgetInstance[], layout: LayoutItem[], connections: WidgetConnection[]) => {
+      (widgets: WidgetInstance[], layout: LayoutItem[]) => {
         if (onUpdatePage) {
-          onUpdatePage(pageIndex, { widgets, layout, connections });
+          onUpdatePage(pageIndex, { widgets, layout });
         }
       },
     [onUpdatePage]
@@ -295,18 +293,11 @@ export function PageCarousel({
   const handleRemoveWidget = useCallback(
     (pageIndex: number, page: Page) => (widgetId: string) => {
       if (onUpdatePage) {
-        // Filter out the widget from widgets array
         const updatedWidgets = page.widgets.filter((w) => w.id !== widgetId);
-        // Filter out the layout item
         const updatedLayout = page.layout.filter((l) => l.i !== widgetId);
-        // Filter out any connections involving this widget
-        const updatedConnections = page.connections.filter(
-          (c) => c.sourceWidgetId !== widgetId && c.targetWidgetId !== widgetId
-        );
         onUpdatePage(pageIndex, {
           widgets: updatedWidgets,
           layout: updatedLayout,
-          connections: updatedConnections,
         });
       }
     },
@@ -337,7 +328,6 @@ export function PageCarousel({
           <WidgetGrid
             layout={page.layout}
             widgets={page.widgets}
-            connections={page.connections}
             pageId={page.id}
             onApplyTemplate={handleApplyTemplate(index)}
             onRemoveWidget={handleRemoveWidget(index, page)}
