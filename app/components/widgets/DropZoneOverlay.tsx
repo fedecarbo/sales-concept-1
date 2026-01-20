@@ -103,7 +103,7 @@ export function DropZoneOverlay({
         {cells.map((cell) => (
           <motion.div
             key={`drop-${cell.x}-${cell.y}`}
-            className={`absolute rounded-lg border-2 border-dashed transition-colors ${
+            className={`absolute rounded-2xl border-2 border-dashed transition-colors ${
               cell.valid
                 ? "border-primary-400/40 bg-primary-500/5"
                 : "border-transparent bg-transparent"

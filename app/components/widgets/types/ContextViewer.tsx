@@ -14,7 +14,6 @@ import { useWidget } from "@/app/context/WidgetContext";
 import { WidgetCard } from "../WidgetCard";
 import { WidgetHeader } from "../WidgetHeader";
 import { WidgetFooter } from "../WidgetFooter";
-import { PillButton, CircleButton } from "../../ui";
 
 interface ContextViewerProps {
   widgetId: string;
@@ -53,7 +52,7 @@ export function ContextViewer({ widgetId, stepNumber, animationDelay, isDragging
   if (!clientContext) {
     return (
       <WidgetCard className="h-full" stepNumber={stepNumber} animationDelay={animationDelay} isDragging={isDragging}>
-        <WidgetHeader title="Client Context" subtitle="Select a client" />
+        <WidgetHeader title="Client Context" />
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="text-center">
             <div
@@ -70,11 +69,13 @@ export function ContextViewer({ widgetId, stepNumber, animationDelay, isDragging
             </p>
           </div>
         </div>
-        <WidgetFooter>
-          <PillButton icon={PencilSquareIcon} variant="soft-gray" disabled>
-            Add note
-          </PillButton>
-        </WidgetFooter>
+        <WidgetFooter
+          primaryAction={{
+            label: "Add note",
+            icon: PencilSquareIcon,
+            disabled: true,
+          }}
+        />
       </WidgetCard>
     );
   }
@@ -83,10 +84,7 @@ export function ContextViewer({ widgetId, stepNumber, animationDelay, isDragging
 
   return (
     <WidgetCard className="h-full" stepNumber={stepNumber} animationDelay={animationDelay} isDragging={isDragging}>
-      <WidgetHeader
-        title={client.name}
-        subtitle={`${client.role} at ${client.company}`}
-      />
+      <WidgetHeader title={client.name} />
       <div className="flex-1 overflow-y-auto">
         {/* Contact Info */}
         <div className="px-4 py-3 border-b border-stone-100 dark:border-stone-800">
@@ -201,17 +199,16 @@ export function ContextViewer({ widgetId, stepNumber, animationDelay, isDragging
           </div>
         )}
       </div>
-      <WidgetFooter>
-        <PillButton icon={PencilSquareIcon} variant="soft-gray">
-          Add note
-        </PillButton>
-        <CircleButton
-          icon={ArrowPathIcon}
-          label="Refresh context"
-          variant="ghost"
-          size="sm"
-        />
-      </WidgetFooter>
+      <WidgetFooter
+        secondaryAction={{
+          label: "Refresh",
+          icon: ArrowPathIcon,
+        }}
+        primaryAction={{
+          label: "Add note",
+          icon: PencilSquareIcon,
+        }}
+      />
     </WidgetCard>
   );
 }

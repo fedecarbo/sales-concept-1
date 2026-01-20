@@ -6,7 +6,6 @@ import { useWidget } from "@/app/context/WidgetContext";
 import { WidgetCard } from "../WidgetCard";
 import { WidgetHeader } from "../WidgetHeader";
 import { WidgetFooter } from "../WidgetFooter";
-import { PillButton, CircleButton } from "../../ui";
 
 interface ClientSelectorProps {
   widgetId: string;
@@ -32,10 +31,7 @@ export function ClientSelector({ widgetId, stepNumber, animationDelay, isDraggin
 
   return (
     <WidgetCard className="h-full" stepNumber={stepNumber} animationDelay={animationDelay} isDragging={isDragging}>
-      <WidgetHeader
-        title="Clients"
-        subtitle={`${clients.length} contacts`}
-      />
+      <WidgetHeader title="Clients" />
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* Search input */}
         <div className="px-3 py-2 border-b border-stone-200 dark:border-stone-700">
@@ -105,17 +101,16 @@ export function ClientSelector({ widgetId, stepNumber, animationDelay, isDraggin
           )}
         </div>
       </div>
-      <WidgetFooter>
-        <PillButton icon={PlusIcon} variant="soft-gray">
-          Add client
-        </PillButton>
-        <CircleButton
-          icon={ArrowPathIcon}
-          label="Refresh clients"
-          variant="ghost"
-          size="sm"
-        />
-      </WidgetFooter>
+      <WidgetFooter
+        secondaryAction={{
+          label: "Refresh",
+          icon: ArrowPathIcon,
+        }}
+        primaryAction={{
+          label: "Add client",
+          icon: PlusIcon,
+        }}
+      />
     </WidgetCard>
   );
 }

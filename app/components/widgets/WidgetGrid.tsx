@@ -337,7 +337,7 @@ export function WidgetGrid({
           {gridCellLayout.map((cell) => (
             <div
               key={cell.i}
-              className="rounded-xl border border-stone-200/40 dark:border-stone-700/40"
+              className="rounded-2xl border border-stone-200/40 dark:border-stone-700/40"
             />
           ))}
         </GridLayout>

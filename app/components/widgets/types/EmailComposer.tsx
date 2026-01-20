@@ -6,7 +6,6 @@ import { useWidget } from "@/app/context/WidgetContext";
 import { WidgetCard } from "../WidgetCard";
 import { WidgetHeader } from "../WidgetHeader";
 import { WidgetFooter } from "../WidgetFooter";
-import { PillButton, CircleButton } from "../../ui";
 
 interface EmailComposerProps {
   widgetId: string;
@@ -79,7 +78,7 @@ export function EmailComposer({ widgetId, stepNumber, animationDelay, isDragging
   if (!selectedClient || !emailDraft) {
     return (
       <WidgetCard className="h-full" stepNumber={stepNumber} animationDelay={animationDelay} isDragging={isDragging}>
-        <WidgetHeader title="Email Composer" subtitle="AI-assisted drafting" />
+        <WidgetHeader title="Email Composer" />
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="text-center">
             <div
@@ -96,21 +95,20 @@ export function EmailComposer({ widgetId, stepNumber, animationDelay, isDragging
             </p>
           </div>
         </div>
-        <WidgetFooter>
-          <PillButton icon={SparklesIcon} variant="soft-gray" disabled>
-            Generate
-          </PillButton>
-        </WidgetFooter>
+        <WidgetFooter
+          primaryAction={{
+            label: "Generate",
+            icon: SparklesIcon,
+            disabled: true,
+          }}
+        />
       </WidgetCard>
     );
   }
 
   return (
     <WidgetCard className="h-full" stepNumber={stepNumber} animationDelay={animationDelay} isDragging={isDragging}>
-      <WidgetHeader
-        title="Email Composer"
-        subtitle={emailDraft.status === "sent" ? "Email sent" : "Draft"}
-      />
+      <WidgetHeader title="Email Composer" />
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* To field */}
         <div className="px-4 py-2 border-b border-stone-100 dark:border-stone-800">
@@ -204,30 +202,29 @@ export function EmailComposer({ widgetId, stepNumber, animationDelay, isDragging
         </div>
       </div>
 
-      <WidgetFooter>
-        {emailDraft.status === "sent" ? (
-          <PillButton
-            icon={ArrowPathIcon}
-            variant="soft"
-            onClick={() => actions.resetEmail()}
-          >
-            New email
-          </PillButton>
-        ) : (
-          <>
-            <PillButton icon={SparklesIcon} variant="soft-gray">
-              Generate
-            </PillButton>
-            <CircleButton
-              icon={TrashIcon}
-              label="Discard draft"
-              variant="ghost"
-              size="sm"
-              onClick={() => actions.resetEmail()}
-            />
-          </>
-        )}
-      </WidgetFooter>
+      <WidgetFooter
+        secondaryAction={
+          emailDraft.status !== "sent"
+            ? {
+                label: "Discard",
+                icon: TrashIcon,
+                onClick: () => actions.resetEmail(),
+              }
+            : undefined
+        }
+        primaryAction={
+          emailDraft.status === "sent"
+            ? {
+                label: "New email",
+                icon: ArrowPathIcon,
+                onClick: () => actions.resetEmail(),
+              }
+            : {
+                label: "Generate",
+                icon: SparklesIcon,
+              }
+        }
+      />
     </WidgetCard>
   );
 }

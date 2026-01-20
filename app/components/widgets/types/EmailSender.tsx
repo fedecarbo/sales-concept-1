@@ -10,6 +10,7 @@ import {
 import { useWidget } from "@/app/context/WidgetContext";
 import { WidgetCard } from "../WidgetCard";
 import { WidgetHeader } from "../WidgetHeader";
+import { WidgetFooter } from "../WidgetFooter";
 
 interface EmailSenderProps {
   widgetId: string;
@@ -36,7 +37,7 @@ export function EmailSender({ widgetId, stepNumber, animationDelay, isDragging }
   if (!emailDraft) {
     return (
       <WidgetCard className="h-full" stepNumber={stepNumber} animationDelay={animationDelay} isDragging={isDragging}>
-        <WidgetHeader title="Send Email" subtitle="Ready to send" />
+        <WidgetHeader title="Send Email" />
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="text-center">
             <div
@@ -53,6 +54,13 @@ export function EmailSender({ widgetId, stepNumber, animationDelay, isDragging }
             </p>
           </div>
         </div>
+        <WidgetFooter
+          primaryAction={{
+            label: "Send Email",
+            icon: PaperAirplaneIcon,
+            disabled: true,
+          }}
+        />
       </WidgetCard>
     );
   }
@@ -62,16 +70,7 @@ export function EmailSender({ widgetId, stepNumber, animationDelay, isDragging }
 
   return (
     <WidgetCard className="h-full" stepNumber={stepNumber} animationDelay={animationDelay} isDragging={isDragging}>
-      <WidgetHeader
-        title="Send Email"
-        subtitle={
-          isSent
-            ? "Delivered"
-            : canSend
-            ? "Ready to send"
-            : "Complete your email"
-        }
-      />
+      <WidgetHeader title="Send Email" />
       <div className="flex-1 flex flex-col justify-center p-4">
         {isSent ? (
           <div className="text-center">
@@ -116,51 +115,22 @@ export function EmailSender({ widgetId, stepNumber, animationDelay, isDragging }
                 </span>
               </div>
             )}
-
-            {/* Send button */}
-            <button
-              onClick={handleSend}
-              disabled={!canSend || isSending}
-              className={`w-full py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 text-sm font-medium transition-all ${
-                canSend && !isSending
-                  ? "bg-stone-900 dark:bg-white text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100"
-                  : "bg-stone-200 dark:bg-stone-700 text-stone-400 dark:text-stone-500 cursor-not-allowed"
-              }`}
-            >
-              {isSending ? (
-                <>
-                  <svg
-                    className="animate-spin h-4 w-4"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                  Sending...
-                </>
-              ) : (
-                <>
-                  <PaperAirplaneIcon className="h-4 w-4" />
-                  Send Email
-                </>
-              )}
-            </button>
           </div>
         )}
       </div>
+      <WidgetFooter
+        primaryAction={
+          isSent
+            ? undefined
+            : {
+                label: isSending ? "Sending..." : "Send Email",
+                icon: PaperAirplaneIcon,
+                onClick: handleSend,
+                disabled: !canSend,
+                loading: isSending,
+              }
+        }
+      />
     </WidgetCard>
   );
 }

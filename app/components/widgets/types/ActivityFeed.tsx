@@ -16,7 +16,6 @@ import { useWidget } from "@/app/context/WidgetContext";
 import { WidgetCard } from "../WidgetCard";
 import { WidgetHeader } from "../WidgetHeader";
 import { WidgetFooter } from "../WidgetFooter";
-import { PillButton, CircleButton } from "../../ui";
 import { getAllInteractions, getActivitySummary, ActivitySummary } from "@/app/data/mockData";
 import { Interaction } from "@/app/types";
 
@@ -82,14 +81,7 @@ export function ActivityFeed({ widgetId, stepNumber, animationDelay, isDragging 
 
   return (
     <WidgetCard className="h-full" stepNumber={stepNumber} animationDelay={animationDelay} isDragging={isDragging}>
-      <WidgetHeader
-        title="Activity Feed"
-        subtitle={
-          filteredByClient
-            ? `${selectedClient.name}'s activity`
-            : "All interactions"
-        }
-      />
+      <WidgetHeader title="Activity Feed" />
       <div className="flex-1 overflow-y-auto">
         {/* AI Summary Section */}
         {summary && filteredByClient && (
@@ -179,17 +171,16 @@ export function ActivityFeed({ widgetId, stepNumber, animationDelay, isDragging 
           </div>
         )}
       </div>
-      <WidgetFooter>
-        <PillButton icon={FunnelIcon} variant="soft-gray">
-          Filter
-        </PillButton>
-        <CircleButton
-          icon={ArrowPathIcon}
-          label="Refresh activity"
-          variant="ghost"
-          size="sm"
-        />
-      </WidgetFooter>
+      <WidgetFooter
+        secondaryAction={{
+          label: "Refresh",
+          icon: ArrowPathIcon,
+        }}
+        primaryAction={{
+          label: "Filter",
+          icon: FunnelIcon,
+        }}
+      />
     </WidgetCard>
   );
 }
