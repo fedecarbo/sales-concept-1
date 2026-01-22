@@ -1,17 +1,41 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
+import {
+  Combobox,
+  ComboboxInput,
+  ComboboxOption,
+  ComboboxOptions,
+} from "@headlessui/react";
 import { SparklesIcon, ArrowPathIcon } from "@heroicons/react/20/solid";
 import { WidgetCard } from "../WidgetCard";
 import { WidgetHeader } from "../WidgetHeader";
 import { WidgetFooter } from "../WidgetFooter";
-import { WidgetTable, TableColumn, WidgetCalendar, WidgetFeed } from "../ui";
+import {
+  WidgetTable,
+  TableColumn,
+  WidgetCalendar,
+  WidgetFeed,
+  WidgetTaskSummary,
+  WidgetStats,
+  WidgetStackedList,
+  WidgetGridList,
+  WidgetDescriptionList,
+  WidgetClientSelector,
+  WidgetEmailComposer,
+} from "../ui";
 import {
   mockContacts,
   mockDeals,
   mockCalendarEvents,
   mockSarahChenHistory,
+  mockSarahChenTaskSummary,
+  mockStats,
+  mockStackedListItems,
+  mockGridListItems,
+  mockDescriptionItems,
   widgetAsks,
+  WidgetAsk,
   Contact,
   Deal,
 } from "../ui/mockData";
@@ -23,7 +47,7 @@ interface GenericWidgetProps {
   isDragging?: boolean;
 }
 
-type ContentType = "empty" | "contacts" | "deals" | "calendar" | "activity";
+type ContentType = "empty" | "contacts" | "deals" | "calendar" | "activity" | "tasks" | "stats" | "stacked-list" | "grid-list" | "description-list" | "client-selector" | "email-composer";
 
 // Status badge component
 function StatusBadge({ status }: { status: string }) {
@@ -146,7 +170,21 @@ const dealColumns: TableColumn<Deal>[] = [
   },
 ];
 
+// Widget ID to content type mapping for auto-population
+const widgetIdContentMap: Record<string, { contentType: ContentType; title: string }> = {
+  // Client Details template
+  "contact-info": { contentType: "description-list", title: "Sarah Chen" },
+  "conversation-history": { contentType: "activity", title: "Conversation History" },
+  "task-summary": { contentType: "tasks", title: "Tasks & Decisions" },
+  "calendar": { contentType: "calendar", title: "Upcoming Events" },
+  // Email Workflow template
+  "client-selector": { contentType: "client-selector", title: "Select Client" },
+  "context-history": { contentType: "activity", title: "Client Context" },
+  "email-composer": { contentType: "email-composer", title: "Compose Email" },
+};
+
 export function GenericWidget({
+  widgetId,
   title = "Widget",
   animationDelay,
   isDragging,
@@ -155,6 +193,30 @@ export function GenericWidget({
   const [displayTitle, setDisplayTitle] = useState(title);
   const [query, setQuery] = useState("");
   const [isThinking, setIsThinking] = useState(false);
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+
+  // Filter suggestions based on query
+  const filteredAsks = useMemo(() => {
+    if (!query.trim()) return widgetAsks;
+    const normalizedQuery = query.toLowerCase().trim();
+    return widgetAsks.filter(
+      (ask) =>
+        ask.label.toLowerCase().includes(normalizedQuery) ||
+        ask.keywords.some((kw) => kw.toLowerCase().includes(normalizedQuery))
+    );
+  }, [query]);
+
+  // Auto-populate content based on widget ID pattern
+  useEffect(() => {
+    // Check if widget ID ends with a known pattern (e.g., "page-123-contact-info" matches "contact-info")
+    for (const [pattern, mapping] of Object.entries(widgetIdContentMap)) {
+      if (widgetId.endsWith(`-${pattern}`)) {
+        setContentType(mapping.contentType);
+        setDisplayTitle(mapping.title);
+        return;
+      }
+    }
+  }, [widgetId]);
 
   const handleAskSubmit = useCallback(async (askQuery?: string) => {
     const searchQuery = (askQuery || query).toLowerCase().trim();
@@ -183,13 +245,6 @@ export function GenericWidget({
     setIsThinking(false);
   }, [query]);
 
-  const handlePresetClick = useCallback((askId: string) => {
-    const ask = widgetAsks.find((a) => a.id === askId);
-    if (ask) {
-      handleAskSubmit(ask.label);
-    }
-  }, [handleAskSubmit]);
-
   const renderContent = () => {
     if (contentType === "empty") {
       return (
@@ -209,46 +264,65 @@ export function GenericWidget({
             </p>
           </div>
 
-          {/* AI Input */}
+          {/* AI Input with Suggestions Dropdown */}
           <div className="w-full max-w-xs">
-            <div className="relative">
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleAskSubmit();
-                }}
-                placeholder="e.g., show my contacts"
-                disabled={isThinking}
-                className="w-full px-3 py-2 pr-10 text-xs bg-white dark:bg-stone-900 rounded-lg border border-stone-200 dark:border-stone-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder:text-stone-400 dark:placeholder:text-stone-500 disabled:opacity-50"
-              />
-              <button
-                onClick={() => handleAskSubmit()}
-                disabled={!query.trim() || isThinking}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 rounded-md bg-stone-900 dark:bg-white text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {isThinking ? (
-                  <ArrowPathIcon className="h-3 w-3 animate-spin" />
-                ) : (
-                  <SparklesIcon className="h-3 w-3" />
-                )}
-              </button>
-            </div>
-          </div>
+            <Combobox
+              immediate
+              onChange={(ask: WidgetAsk | null) => {
+                if (ask) {
+                  handleAskSubmit(ask.label);
+                }
+              }}
+            >
+              <div className="relative">
+                <ComboboxInput
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && query.trim()) {
+                      e.preventDefault();
+                      handleAskSubmit();
+                    }
+                  }}
+                  placeholder="e.g., show my contacts"
+                  disabled={isThinking}
+                  className="w-full px-3 py-2 pr-10 text-xs bg-white dark:bg-stone-900 rounded-lg border border-stone-200 dark:border-stone-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder:text-stone-400 dark:placeholder:text-stone-500 disabled:opacity-50"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleAskSubmit()}
+                  disabled={!query.trim() || isThinking}
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 rounded-md bg-stone-900 dark:bg-white text-white dark:text-stone-900 hover:bg-stone-800 dark:hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isThinking ? (
+                    <ArrowPathIcon className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <SparklesIcon className="h-3 w-3" />
+                  )}
+                </button>
 
-          {/* Preset asks */}
-          <div className="flex flex-wrap justify-center gap-1.5">
-            {widgetAsks.map((ask) => (
-              <button
-                key={ask.id}
-                onClick={() => handlePresetClick(ask.id)}
-                disabled={isThinking}
-                className="px-2.5 py-1 text-[10px] font-medium rounded-full bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors disabled:opacity-50"
-              >
-                {ask.label}
-              </button>
-            ))}
+                <ComboboxOptions
+                  transition
+                  className="absolute z-10 mt-1 w-full max-h-48 overflow-auto rounded-lg bg-white dark:bg-stone-900 py-1 text-xs shadow-lg border border-stone-200 dark:border-stone-700 data-[closed]:opacity-0 data-[leave]:transition data-[leave]:duration-100 data-[leave]:ease-in"
+                >
+                  {filteredAsks.length > 0 ? (
+                    filteredAsks.map((ask) => (
+                      <ComboboxOption
+                        key={ask.id}
+                        value={ask}
+                        className="cursor-pointer select-none px-3 py-2 text-stone-700 dark:text-stone-300 data-[focus]:bg-stone-100 dark:data-[focus]:bg-stone-800 data-[focus]:text-stone-900 dark:data-[focus]:text-white"
+                      >
+                        {ask.label}
+                      </ComboboxOption>
+                    ))
+                  ) : (
+                    <div className="px-3 py-2 text-stone-500 dark:text-stone-400">
+                      No suggestions found
+                    </div>
+                  )}
+                </ComboboxOptions>
+              </div>
+            </Combobox>
           </div>
         </div>
       );
@@ -281,6 +355,47 @@ export function GenericWidget({
 
     if (contentType === "activity") {
       return <WidgetFeed activities={mockSarahChenHistory} />;
+    }
+
+    if (contentType === "tasks") {
+      return <WidgetTaskSummary items={mockSarahChenTaskSummary} />;
+    }
+
+    if (contentType === "stats") {
+      return <WidgetStats stats={mockStats} keyExtractor={(stat) => stat.id} />;
+    }
+
+    if (contentType === "stacked-list") {
+      return <WidgetStackedList items={mockStackedListItems} />;
+    }
+
+    if (contentType === "grid-list") {
+      return <WidgetGridList items={mockGridListItems} />;
+    }
+
+    if (contentType === "description-list") {
+      return <WidgetDescriptionList items={mockDescriptionItems} />;
+    }
+
+    if (contentType === "client-selector") {
+      return (
+        <WidgetClientSelector
+          contacts={mockContacts}
+          selectedContact={selectedContact}
+          onSelect={setSelectedContact}
+        />
+      );
+    }
+
+    if (contentType === "email-composer") {
+      return (
+        <WidgetEmailComposer
+          recipient={selectedContact || mockContacts[0]}
+          onSend={(email) => {
+            console.log("Email sent:", email);
+          }}
+        />
+      );
     }
 
     return null;
